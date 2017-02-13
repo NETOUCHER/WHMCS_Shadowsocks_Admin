@@ -1,4 +1,4 @@
-# WHMCS-Shadowsocks-PDO
+# WHMCS-Shadowsocks
 
 This module is for shadowsocks-manyuser.</br>
 
