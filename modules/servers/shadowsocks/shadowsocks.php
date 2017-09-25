@@ -34,7 +34,6 @@ function shadowsocks_mysql($params) {
   }
 	catch(PDOException $e){
       die('Cannot add.' . $e->getMessage());
-			$result='Cannot add.' . $e->getMessage();
   }
 	return $result;
 }
@@ -77,7 +76,6 @@ function shadowsocks_CreateNewPort($params) {
   }
 	catch(PDOException $e){
       die('Cannot create new port.' . $e->getMessage());
-			$result='Cannot create new port.' . $e->getMessage();
   }
 	return $result;
 }
@@ -136,7 +134,6 @@ function shadowsocks_CreateAccount($params) {
 		}
 		catch(PDOException $e){
 	      die('Cannot find pid.' . $e->getMessage());
-				$result='Cannot find pid.' . $e->getMessage();
 	  }
 
   		if (!empty($select['pid'])) {
@@ -231,7 +228,6 @@ function shadowsocks_TerminateAccount($params) {
 	}
 	catch(PDOException $e){
 			die('Cannot find pid.' . $e->getMessage());
-			$result='Cannot find pid.' . $e->getMessage();
 	}
 	return $result;
 }
@@ -276,7 +272,6 @@ function shadowsocks_SuspendAccount($params) {
 			 catch(PDOException $e)
 			 {
 					die('Error. Cloud not Suspend this Account' . $e->getMessage());
-					$result = "Can't suspend user.";
 				}
 		}
 		return $result;
@@ -319,7 +314,6 @@ function shadowsocks_UnSuspendAccount($params) {
 				 }
 	}
 	catch(PDOException $e){
-			$result='Cannot UnSuspendAccount. PDO Exception.' . $e->getMessage();
 			die('Cannot UnSuspendAccount. PDO Exception.' . $e->getMessage());
 	}
 	return $result;
@@ -417,7 +411,6 @@ function shadowsocks_ChangePackage($params) {
 	}
 	catch(PDOException $e){
 		die('Update usertransfer Failed in ChangePackage' . $e->getMessage());
-		return 'failed in ChangePackage.' . $e->getMessage();
 	}
 }
 
@@ -442,12 +435,11 @@ function shadowsocks_Renew($params) {
 			$stmt2->execute(array(':serviceid' => $params['serviceid']));
 			return 'success';
 		} else {
-			return 'New product it is.'
+			return 'Noneed to refresh.'
 		}
 	}
 	catch(PDOException $e){
-		die('Reset ' . $e->getMessage());
-		return 'failed in ChangePackage.' . $e->getMessage();
+		die('Renew failed. ' . $e->getMessage());
 	}
 }
 
@@ -605,7 +597,7 @@ function shadowsocks_ClientArea($params) {
         $decodeQuery = json_encode($Query);
 	}
 	catch(PDOException $e){
-			$html='PDO Died' . $e->getMessage();
+			$html='Error in establishing database connection with PDO_MySQL' . $e->getMessage();
 			die('PDO Died' . $e->getMessage());
 	}
     if (isset( $traffic )) {
@@ -757,7 +749,6 @@ function shadowsocks_AdminServicesTabFields($params) {
 			return $fieldsarray;
 		}
 		catch(PDOException $e){
-				return 'PDO died' . $e->getMessage();
 				die('PDO died' . $e->getMessage());
 		}
 
@@ -766,7 +757,7 @@ function shadowsocks_AdminServicesTabFields($params) {
 
 function shadowsocks_AdminCustomButtonArray() {
     $buttonarray = array(
-   "重置流量" => "RstTraffic",
+   "Reset Traffic" => "RstTraffic",
   );
   return $buttonarray;
 }
