@@ -1,7 +1,14 @@
-# WHMCS-Shadowsocks
+# WHMCS-Shadowsocks [Server Module]
 
 This module is for shadowsocks-manyuser.</br>
 
 Version Update:</br>
+2.0.2 Integrated with <strong>QR code generator</strong>. ***You must configure the module manually.***</br>
+2.0.1 A Shadowsocks link generator.
 2.0.0 Converted All Mysql queries into PDO_Mysql queries.</br>
-1.0.0 <a href="https://github.com/soft-wiki/whmcs-shadowsocks">whmcs-shadowsocks</a> by Tension</br> More than one origin, not to fork.
+1.0.0 <a href="https://github.com/soft-wiki/whmcs-shadowsocks">whmcs-shadowsocks</a> by Tension</br>(Verification Request)
+
+SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyuser/shadowsocks
+
+# Configure your module
+<strong>****MOST IMPORTANT****</strong> You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong> to ensure your QR code could be loaded. Then you could edit the domain name from <strong>example.com</strong> to yours in <strong>QR/qrcode.php</strong> and cancel the remark to enable the anti-abuse for your generator. The code in remark area could define the domain which could use the generator legally and all the visiting from the other domain will be block with another QR code which could be read as a curse.
