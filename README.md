@@ -14,16 +14,16 @@ SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyus
 # Configure your module
 <strong>****MOST IMPORTANT****</strong></br>
 You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong> </br>
-<code>
-$imgs .= '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
-</code>
+
+    $imgs .= '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+
 to ensure your QR code could be loaded. </br>
 Then you could edit the domain name from <strong>example.com</strong> to yours in <strong>QR/qrcode.php</strong></br>
-<code>
-if(strpos($_SERVER['HTTP_REFERER'], 'example.com') == FALSE)</br>
-   {</br>
-      QRcode::png("Fuck your self idiot.");</br>
-      exit;</br>
-    }</br>
-</code>
+
+    if(strpos($_SERVER['HTTP_REFERER'], 'example.com') == FALSE)
+       {
+          QRcode::png("Fuck your self idiot.");
+          exit;
+        }
+
 and clear the remark to enable the anti-abuse for your generator. The code in remark area could define the domain which could use the generator legally and all the visiting from the other domain will be block with another QR code which could be decoded to a curse.
