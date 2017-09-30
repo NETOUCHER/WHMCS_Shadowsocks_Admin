@@ -435,7 +435,7 @@ function shadowsocks_Renew($params) {
 			$stmt2->execute(array(':serviceid' => $params['serviceid']));
 			return 'success';
 		} else {
-			return 'Noneed to refresh.'
+			return 'Noneed to refresh.';
 		}
 	}
 	catch(PDOException $e){
