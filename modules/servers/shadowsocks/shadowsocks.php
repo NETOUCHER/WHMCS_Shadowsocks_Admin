@@ -1,51 +1,89 @@
 <?php
 /**
  * @author Gaukas
- * @version 2.0.2
- */
+ * @version 3.0.0
+**/
 use WHMCS\Database\Capsule;
 
-function shadowsocks_ConfigOptions() {
+function Shadowsocks_ConfigOptions() {
+	return [
+        "dbname" => [
+            "FriendlyName" => "Database",
+            "Type" => "text",
+            "Size" => "25",
+            "Description" => "User database name",
+            "Default" => "shadowsocks",
+        ],
+				"tbname" => [
+            "FriendlyName" => "Table",
+            "Type" => "text",
+            "Size" => "25",
+            "Description" => "",
+            "Default" => "shadowsocks",
+        ],
+        "password" => [
+            "FriendlyName" => "Password",
+            "Type" => "password", # Password Field
+            "Size" => "25", # Defines the Field Width
+            "Description" => "Password",
+            "Default" => "Example",
+        ],
+        "usessl" => [
+            "FriendlyName" => "Enable SSL",
+            "Type" => "yesno", # Yes/No Checkbox
+            "Description" => "Tick to use secure connections",
+        ],
+        "package" => [
+            "FriendlyName" => "Package Name",
+            "Type" => "dropdown", # Dropdown Choice of Options
+            "Options" => "Starter,Advanced,Ultimate",
+            "Description" => "Sample Dropdown",
+            "Default" => "Advanced",
+        ],
+        "packageWithNVP" => [
+            "FriendlyName" => "Package Name v2",
+            "Type" => "dropdown", # Dropdown Choice of Options
+            "Options" => [
+                'package1' => 'Starter',
+                'package2' => 'Advanced',
+                'package3' => 'Ultimate',
+            ],
+            "Description" => "Sample Dropdown",
+            "Default" => "package2",
+        ],
+        "disk" => [
+            "FriendlyName" => "Disk Space",
+            "Type" => "radio", # Radio Selection of Options
+            "Options" => "100MB,200MB,300MB",
+            "Description" => "Radio Options Demo",
+            "Default" => "200MB",
+        ],
+        "comments" => [
+            "FriendlyName" => "Notes",
+            "Type" => "textarea", # Textarea
+            "Rows" => "3", # Number of Rows
+            "Cols" => "50", # Number of Columns
+            "Description" => "Description goes here",
+            "Default" => "Enter notes here",
+        ],
+    ];
 	$configarray = array(
-	"Database" => array("Type" => "text", "Size" => "25"),
-	"Encryption" 	=> array("Type" => "text", "Size" => "25"),
-	"Init port" 	=> array("Type" => "text", "Size" => "25"),
-	"Server List" => array("Type" => "textarea"),
-	"Basic Traffic (Gibibytes)" => array("Type" => "textarea")
+		"Database" => array("Type" => "text", "Size" => "25"),
+		"Encryption" 	=> array("Type" => "text", "Size" => "25"),
+		"Init port" 	=> array("Type" => "text", "Size" => "25"),
+		"Default Traffic (GiB)" => array("Type" => "text", "Size" => "25"),
+		"Server List" => array("Type" => "textarea")
 	);
 	return $configarray;
 }
 
-function shadowsocks_mysql($params) {
-	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-	$username = $params['serverusername'];
-	$pwd = $params['serverpassword'];
-
-	$attr = array(
-	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-	);
-
-  try{
-      //$pdo = new PDO($dsn, $username, $pwd, $attr);
-			//if($stmt = $pdo->query("alter table user add pid varchar(50) not null"))
-			//{
-					$result=true;
-			//}
-  }
-	catch(PDOException $e){
-      die('Cannot add.' . $e->getMessage());
-  }
-	return $result;
-}
-
 function shadowsocks_CreateNewPort($params) {
 	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
-		$start = 9100;
+			$start = 9100;
 	} else {
-		$start = $params['configoption3'];
+			$start = $params['configoption3'];
 	}
 	$end = 65535;
-	shadowsocks_mysql($params);
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -182,9 +220,9 @@ function shadowsocks_CreateAccount($params) {
 						$result='Error during CreatingAccount-Inserting into user';
 					}
 			  } else {
-						if (!empty($params['configoption5']))
+						if (!empty($params['configoption4']))
 						{
-								$max = $params['configoption5'];
+								$max = $params['configoption4'];
 						}
 						if(isset($max))
 						{
@@ -199,7 +237,7 @@ function shadowsocks_CreateAccount($params) {
 						}
 						else
 						{
-								$result = 'Error during CreatingAccount-Inserting into user';
+								$result = 'Error. Could not Creat Account.';
 						}
 				}
   	}
@@ -223,11 +261,11 @@ function shadowsocks_TerminateAccount($params) {
 			{
 				$result = 'success';
 			} else {
-				$result = 'Error. Cloud not Terminate this Account.';
+				$result = 'Error. Could not Terminate this Account.';
 			}
 	}
 	catch(PDOException $e){
-			die('Cannot find pid.' . $e->getMessage());
+			die('PDO error:' . $e->getMessage());
 	}
 	return $result;
 }
@@ -396,8 +434,8 @@ function shadowsocks_ChangePackage($params) {
 					$stmt->execute(array(':traffic' => $traffic, ':serviceid' => $params['serviceid']));
 					return 'success';
 		} else {
-					if (!empty($params['configoption5'])) {
-						$max = $params['configoption5'];
+					if (!empty($params['configoption4'])) {
+						$max = $params['configoption4'];
 					}
 					if(isset($max)) {
 						$traffic = $max*1024*1048576;
@@ -429,14 +467,9 @@ function shadowsocks_Renew($params) {
 		$stmt = $pdo->prepare('SELECT sum(u+d) FROM user WHERE pid=:serviceid');
 		$stmt->execute(array(':serviceid' => $serviceid));
 		$Query = $stmt->fetch(PDO::FETCH_ASSOC);
-		if($Query[0]!=0)
-		{
-			$stmt2 = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
-			$stmt2->execute(array(':serviceid' => $params['serviceid']));
-			return 'success';
-		} else {
-			return 'Noneed to refresh.';
-		}
+		$stmt2 = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
+		$stmt2->execute(array(':serviceid' => $params['serviceid']));
+		return 'success';
 	}
 	catch(PDOException $e){
 		die('Renew failed. ' . $e->getMessage());
@@ -444,7 +477,7 @@ function shadowsocks_Renew($params) {
 }
 
 function shadowsocks_node($params) {
-	$node = $params['configoption4'];
+	$node = $params['configoption5'];
 	if (!empty($node) || isset($node)) {
 		$str = explode(';', $node);
 		foreach ($str as $key => $val) {
@@ -459,7 +492,7 @@ function shadowsocks_node($params) {
 
 
 function shadowsocks_link($params) {
-	$node = $params['configoption4'];
+	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
@@ -498,7 +531,7 @@ function shadowsocks_link($params) {
 }
 
 function shadowsocks_qrcode($params) {
-	$node = $params['configoption4'];
+	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
@@ -718,28 +751,23 @@ function shadowsocks_AdminServicesTabFields($params) {
 			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
 	);
 
-		//Traffic
-		$traffic = null;
-		// $traffic = isset($params['configoptions']['traffic']) ? $params['configoptions']['traffic']*1024 : isset($params['configoption5']) ? $params['configoption5']*1024 : 1048576;
-		if (isset($params['configoptions']['traffic'])) {
+	if (isset($params['configoptions']['traffic'])) {
 			$traffic = $params['configoptions']['traffic']*1024;
-		} else if(!empty($params['configoption5'])) {
-			$traffic = $params['configoption5']*1024;
-		} else {
+	} else if(!empty($params['configoption4'])) {
+			$traffic = $params['configoption4']*1024;
+	} else {
 			$traffic = 1048576;
-		}
+	}
 
-		try
-		{
+	try
+	{
 			$pdo = new PDO($dsn, $username, $pwd, $attr);
 			$stmt = $pdo->prepare("SELECT sum(u+d),port FROM user WHERE pid=:serviceid");
 			$stmt->execute(array(':serviceid' => $params['serviceid']));
 			$Query = $stmt->fetch(PDO::FETCH_BOTH);
 			$Usage = $Query[0]/1048576;
 			$Port = $Query['port'];
-			//Free
 			$Free = $traffic - $Usage;
-			//Percentage
 			$fieldsarray = array(
 			 'Traffic Package' => $traffic.' MB',
 			 'Used' => $Usage.' MB',
@@ -747,18 +775,17 @@ function shadowsocks_AdminServicesTabFields($params) {
 			 'Service port' => $Port,
 			);
 			return $fieldsarray;
-		}
-		catch(PDOException $e){
+	}
+	catch(PDOException $e){
 				die('PDO died' . $e->getMessage());
-		}
-
-
+	}
 }
 
 function shadowsocks_AdminCustomButtonArray() {
-    $buttonarray = array(
+  $buttonarray = array(
    "Reset Traffic" => "RstTraffic",
   );
   return $buttonarray;
 }
+
 ?>
