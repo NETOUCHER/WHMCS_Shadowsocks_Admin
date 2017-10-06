@@ -5,42 +5,43 @@
 **/
 use WHMCS\Database\Capsule;
 
+//Function to show config options in product settings
 function Shadowsocks_ConfigOptions() {
 	return [
-        "dbname" => [
-            "FriendlyName" => "Database",
-            "Type" => "text",
-            "Size" => "25",
-            "Description" => "User database name",
-            "Default" => "shadowsocks",
-        ],
-				"encrypt" => [
-            "FriendlyName" => "Encryption",
-            "Type" => "text",
-            "Size" => "25",
-            "Description" => "Transfer encrypt method",
-            "Default" => "AES-256-CFB",
-        ],
-        "port" => [
-            "FriendlyName" => "Initial Port",
-            "Type" => "text",
-            "Size" => "25",
-            "Description" => "Default port if no users exist in current table",
-            "Default" => "8000",
-        ],
-				"traffic" => [
-						"FriendlyName" => "Default Traffic(GiB)",
-						"Type" => "text",
-						"Size" => "25",
-						"Description" => "Default bandwidth if not set specially",
-						"Default" => "10",
-				],
-				"server" => [
-						"FriendlyName" => "Server List",
-						"Type" => "textarea",
-						"Description" => "All the ss-server in this product",
-				],
-    ];
+		"dbname" => [
+			"FriendlyName" => "Database",
+			"Type" => "text",
+			"Size" => "25",
+			"Description" => "User database name",
+			"Default" => "shadowsocks",
+		],
+		"encrypt" => [
+			"FriendlyName" => "Encryption",
+			"Type" => "text",
+			"Size" => "25",
+			"Description" => "Transfer encrypt method",
+			"Default" => "AES-256-CFB",
+		],
+		"port" => [
+			"FriendlyName" => "Initial Port",
+			"Type" => "text",
+			"Size" => "25",
+			"Description" => "Default port if no users exist in current table",
+			"Default" => "8000",
+		],
+		"traffic" => [
+			"FriendlyName" => "Default Traffic(GiB)",
+			"Type" => "text",
+			"Size" => "25",
+			"Description" => "Default bandwidth if not set specially",
+			"Default" => "10",
+		],
+		"server" => [
+			"FriendlyName" => "Server List",
+			"Type" => "textarea",
+			"Description" => "All the ss-server in this product",
+		],
+	];
 }
 
 //The function to check the database for the new port.
@@ -50,7 +51,6 @@ function shadowsocks_nextport($params) {
 	} else {
 			$start = $params['configoption3'];
 	}
-	$end = 65535;
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -60,86 +60,91 @@ function shadowsocks_nextport($params) {
 	);
 
   try{
-      $pdo = new PDO($dsn, $username, $pwd, $attr);
-			$stmt = $pdo->query("SELECT port FROM user");
-			$select = $stmt->fetch(PDO::FETCH_ASSOC);
-			if(!$select == "")
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->query("SELECT port FROM user");
+		$select = $stmt->fetch(PDO::FETCH_ASSOC);
+		// Check whether there are former services in the table, will return a port as the last port + 1.
+		if(!$select == "")
+		{
+			$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1"); //Check the last port
+			$last = $stmt2->fetch(PDO::FETCH_ASSOC);
+			// Check whether the ports have been used up
+			if ($lastport['port'] > 65534)
 			{
-					$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1");
-
-					$lastport = $stmt2->fetch(PDO::FETCH_ASSOC);
-					$result = $lastport['port']+1;
-					if ($result > $end)
-					{
-							$result = "Port exceeds the maximum value.";
-					}
-				}
-					else
-					{
-							$result=$start;
-					}
+				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
+			}	else {
+				$result = $lastport['port']+1; // If not, then use next port.
+			}
+		}	else {
+			$result=$start; // If no service in the table, will create accounts with the default port.
+		}
   }
 	catch(PDOException $e){
-      die('Cannot create new port.' . $e->getMessage());
+      $result = 1;
   }
 	return $result;
 }
 
 function shadowsocks_CreateAccount($params) {
 	$serviceid			= $params["serviceid"]; # Unique ID of the product/service in the WHMCS Database
-    $pid 				= $params["pid"]; # Product/Service ID
-    $producttype		= $params["producttype"]; # Product Type: hostingaccount, reselleraccount, server or other
-    $domain 			= $params["domain"];
-  	$username 			= $params["username"];
-  	$password 			= $params["password"];
-    $clientsdetails 	= $params["clientsdetails"]; # Array of clients details - firstname, lastname, email, country, etc...
-    $customfields 		= $params["customfields"]; # Array of custom field values for the product
-    $configoptions 		= $params["configoptions"]; # Array of configurable option values for the product
+  $pid 				= $params["pid"]; # Product/Service ID
+  $producttype		= $params["producttype"]; # Product Type: hostingaccount, reselleraccount, server or other
+  $domain 			= $params["domain"];
+  $username 			= $params["username"];
+  $password 			= $params["password"];
+  $clientsdetails 	= $params["clientsdetails"]; # Array of clients details - firstname, lastname, email, country, etc...
+  $customfields 		= $params["customfields"]; # Array of custom field values for the product
+  $configoptions 		= $params["configoptions"]; # Array of configurable option values for the product
+ 	# Product module option settings from ConfigOptions array above
+  $configoption1 		= $params["configoption1"];
+  $configoption2 		= $params["configoption2"];
+  # Additional variables if the product/service is linked to a server
+  $server 			= $params["server"]; # True if linked to a server
+  $serverid 			= $params["serverid"];
+  $serverip 			= $params["serverip"];
+  $serverusername 	= $params["serverusername"];
+  $serverpassword		= $params["serverpassword"];
+  $serveraccesshash 	= $params["serveraccesshash"];
+  $serversecure 		= $params["serversecure"]; # If set, SSL Mode is enabled in the server config
 
-    # Product module option settings from ConfigOptions array above
-    $configoption1 		= $params["configoption1"];
-    $configoption2 		= $params["configoption2"];
+	$port = shadowsocks_nextport($params);
+	// Check the returned code.
+	if($port = 0)
+	{
+		die("Ports exceeded.");
+	}
+	elseif($port = 1) {
+		die("PDO error in port checking.");
+	}
 
-    # Additional variables if the product/service is linked to a server
-    $server 			= $params["server"]; # True if linked to a server
-    $serverid 			= $params["serverid"];
-    $serverip 			= $params["serverip"];
-    $serverusername 	= $params["serverusername"];
-    $serverpassword		= $params["serverpassword"];
-    $serveraccesshash 	= $params["serveraccesshash"];
-    $serversecure 		= $params["serversecure"]; # If set, SSL Mode is enabled in the server config
+	// Use WHMCS API
+	$pdo = Capsule::connection()->getPdo();
+	$pdo->beginTransaction();
+	try {
+		$stmt = $pdo->query("SELECT username FROM tbladmins");
+		$adminusername = $stmt->fetch(PDO::FETCH_ASSOC);
+		$pdo->commit();
+	} catch (\Exception $e) {
+		$result="Got error when trying to get adminusername {$e->getMessage()}";
+		$pdo->rollBack();
+	}
+	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
+	$attr = array(
+		PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
 
-		$pdo = Capsule::connection()->getPdo();
-		$pdo->beginTransaction();
-
-		try {
-		    $stmt = $pdo->query("SELECT username FROM tbladmins");
-				$adminusername = $stmt->fetch(PDO::FETCH_ASSOC);
-		    $pdo->commit();
-		} catch (\Exception $e) {
-		    $result="Got error when trying to get adminusername {$e->getMessage()}";
-		    $pdo->rollBack();
-		}
-		$port = shadowsocks_nextport($params);
-
-		$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-		$username = $params['serverusername'];
-		$pwd = $params['serverpassword'];
-
-		$attr = array(
-		    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-		);
-
-	  try
-		{
-	      $pdo2 = new PDO($dsn, $username, $pwd, $attr);
-				$stmt2 = $pdo2->prepare('SELECT pid FROM user WHERE pid=:serviceid');
-				$stmt2->execute(array(':serviceid' => $serviceid));
-				$select = $stmt2->fetch(PDO::FETCH_ASSOC);
-		}
-		catch(PDOException $e){
-	      die('Cannot find pid.' . $e->getMessage());
-	  }
+	try
+	{
+		$pdo2 = new PDO($dsn, $username, $pwd, $attr);
+		$stmt2 = $pdo2->prepare('SELECT pid FROM user WHERE pid=:serviceid');
+		$stmt2->execute(array(':serviceid' => $serviceid));
+		$select = $stmt2->fetch(PDO::FETCH_ASSOC);
+	}
+	catch(PDOException $e){
+		die('Cannot find pid.' . $e->getMessage());
+	}
 
   		if (!empty($select['pid'])) {
   		 	$result = "Service already exists.";
