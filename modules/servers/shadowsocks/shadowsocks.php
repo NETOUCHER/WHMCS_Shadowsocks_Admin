@@ -43,9 +43,10 @@ function Shadowsocks_ConfigOptions() {
     ];
 }
 
-function shadowsocks_CreateNewPort($params) {
+//The function to check the database for the new port.
+function shadowsocks_nextport($params) {
 	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
-			$start = 9100;
+			$start = 8000;
 	} else {
 			$start = $params['configoption3'];
 	}
@@ -119,7 +120,7 @@ function shadowsocks_CreateAccount($params) {
 		    $result="Got error when trying to get adminusername {$e->getMessage()}";
 		    $pdo->rollBack();
 		}
-		$port = shadowsocks_CreateNewPort($params);
+		$port = shadowsocks_nextport($params);
 
 		$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 		$username = $params['serverusername'];
