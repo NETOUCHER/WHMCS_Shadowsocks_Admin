@@ -14,67 +14,33 @@ function Shadowsocks_ConfigOptions() {
             "Description" => "User database name",
             "Default" => "shadowsocks",
         ],
-				"tbname" => [
-            "FriendlyName" => "Table",
+				"encrypt" => [
+            "FriendlyName" => "Encryption",
             "Type" => "text",
             "Size" => "25",
-            "Description" => "",
-            "Default" => "shadowsocks",
+            "Description" => "Transfer encrypt method",
+            "Default" => "AES-256-CFB",
         ],
-        "password" => [
-            "FriendlyName" => "Password",
-            "Type" => "password", # Password Field
-            "Size" => "25", # Defines the Field Width
-            "Description" => "Password",
-            "Default" => "Example",
+        "port" => [
+            "FriendlyName" => "Initial Port",
+            "Type" => "text",
+            "Size" => "25",
+            "Description" => "Default port if no users exist in current table",
+            "Default" => "8000",
         ],
-        "usessl" => [
-            "FriendlyName" => "Enable SSL",
-            "Type" => "yesno", # Yes/No Checkbox
-            "Description" => "Tick to use secure connections",
-        ],
-        "package" => [
-            "FriendlyName" => "Package Name",
-            "Type" => "dropdown", # Dropdown Choice of Options
-            "Options" => "Starter,Advanced,Ultimate",
-            "Description" => "Sample Dropdown",
-            "Default" => "Advanced",
-        ],
-        "packageWithNVP" => [
-            "FriendlyName" => "Package Name v2",
-            "Type" => "dropdown", # Dropdown Choice of Options
-            "Options" => [
-                'package1' => 'Starter',
-                'package2' => 'Advanced',
-                'package3' => 'Ultimate',
-            ],
-            "Description" => "Sample Dropdown",
-            "Default" => "package2",
-        ],
-        "disk" => [
-            "FriendlyName" => "Disk Space",
-            "Type" => "radio", # Radio Selection of Options
-            "Options" => "100MB,200MB,300MB",
-            "Description" => "Radio Options Demo",
-            "Default" => "200MB",
-        ],
-        "comments" => [
-            "FriendlyName" => "Notes",
-            "Type" => "textarea", # Textarea
-            "Rows" => "3", # Number of Rows
-            "Cols" => "50", # Number of Columns
-            "Description" => "Description goes here",
-            "Default" => "Enter notes here",
-        ],
+				"traffic" => [
+						"FriendlyName" => "Default Traffic(GiB)",
+						"Type" => "text",
+						"Size" => "25",
+						"Description" => "Default bandwidth if not set specially",
+						"Default" => "10",
+				],
+				"server" => [
+						"FriendlyName" => "Server List",
+						"Type" => "textarea",
+						"Description" => "All the ss-server in this product",
+				],
     ];
-	$configarray = array(
-		"Database" => array("Type" => "text", "Size" => "25"),
-		"Encryption" 	=> array("Type" => "text", "Size" => "25"),
-		"Init port" 	=> array("Type" => "text", "Size" => "25"),
-		"Default Traffic (GiB)" => array("Type" => "text", "Size" => "25"),
-		"Server List" => array("Type" => "textarea")
-	);
-	return $configarray;
 }
 
 function shadowsocks_CreateNewPort($params) {
