@@ -6,7 +6,7 @@
 use WHMCS\Database\Capsule;
 
 //Function to show config options in product settings
-function Shadowsocks_ConfigOptions() {
+function ssmu_ConfigOptions() {
 	return [
 		"dbname" => [
 			"FriendlyName" => "Database",
@@ -86,38 +86,20 @@ function shadowsocks_nextport($params) {
 }
 
 function shadowsocks_CreateAccount($params) {
-	$serviceid			= $params["serviceid"]; # Unique ID of the product/service in the WHMCS Database
-  $pid 				= $params["pid"]; # Product/Service ID
-  $producttype		= $params["producttype"]; # Product Type: hostingaccount, reselleraccount, server or other
-  $domain 			= $params["domain"];
-  $username 			= $params["username"];
-  $password 			= $params["password"];
-  $clientsdetails 	= $params["clientsdetails"]; # Array of clients details - firstname, lastname, email, country, etc...
-  $customfields 		= $params["customfields"]; # Array of custom field values for the product
-  $configoptions 		= $params["configoptions"]; # Array of configurable option values for the product
- 	# Product module option settings from ConfigOptions array above
-  $configoption1 		= $params["configoption1"];
-  $configoption2 		= $params["configoption2"];
-  # Additional variables if the product/service is linked to a server
-  $server 			= $params["server"]; # True if linked to a server
-  $serverid 			= $params["serverid"];
-  $serverip 			= $params["serverip"];
-  $serverusername 	= $params["serverusername"];
-  $serverpassword		= $params["serverpassword"];
-  $serveraccesshash 	= $params["serveraccesshash"];
-  $serversecure 		= $params["serversecure"]; # If set, SSL Mode is enabled in the server config
+	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
+  $password 			= $params["password"]; //
 
 	$port = shadowsocks_nextport($params);
 	// Check the returned code.
 	if($port = 0)
 	{
-		die("Ports exceeded.");
+		return "Ports exceeded.";
 	}
 	elseif($port = 1) {
-		die("PDO error in port checking.");
+		return "PDO error in port checking.";
 	}
 
-	// Use WHMCS API
+	// Use WHMCS Capsule to get adminusername for API
 	$pdo = Capsule::connection()->getPdo();
 	$pdo->beginTransaction();
 	try {
@@ -125,8 +107,8 @@ function shadowsocks_CreateAccount($params) {
 		$adminusername = $stmt->fetch(PDO::FETCH_ASSOC);
 		$pdo->commit();
 	} catch (\Exception $e) {
-		$result="Got error when trying to get adminusername {$e->getMessage()}";
 		$pdo->rollBack();
+		return "Got error when trying to get adminusername {$e->getMessage()}";
 	}
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
@@ -143,66 +125,69 @@ function shadowsocks_CreateAccount($params) {
 		$select = $stmt2->fetch(PDO::FETCH_ASSOC);
 	}
 	catch(PDOException $e){
-		die('Cannot find pid.' . $e->getMessage());
+		return 'Cannot find pid.' . $e->getMessage();
 	}
 
-  		if (!empty($select['pid'])) {
-  		 	$result = "Service already exists.";
-  		} else {
-  			if (isset($params['customfields']['password'])) {
-
-				$command = 'EncryptPassword';
-				$postData = array(
-	    		'password2' => $params["customfields"]['password'],
-				);
-				try {
-						$adminuser = $adminusername['username'];
-						}
-				 catch (Exception $e)
-				 {
-					 	die("Failure in adminuser define. No username in the ARRAY adminusername could be found.");
-				 }
+  if (!empty($select['pid'])) {
+		$result = "Service already exists.";
+  } else {
+		if (isset($params['customfields']['password'])) {
+			$command = 'EncryptPassword';
+			$postData = array(
+	  		'password2' => $params["customfields"]['password'],
+			);
+			try {
 				$adminuser = $adminusername['username'];
-				$results = localAPI($command, $postData, $adminuser);
-				$table = 'tblhosting';
-				try {
-    				$updatedUserCount = Capsule::table($table)
-        				->where('id', $params["serviceid"])
-        				->update(
-            				[
-                				'password' => $results['password'],
-            				]
-        				);
-						}
-				catch (\Exception $e)  {
-    				echo "Password update failed.Bad Capsule function. {$e->getMessage()}";
-						}
-				$password = $params["customfields"]['password'];
-				}
-				//Create Account
+			} catch (Exception $e) {
+				die("Failure in adminuser define. No username in the ARRAY adminusername could be found.");
+			}
+			$adminuser = $adminusername['username'];
+			$results = localAPI($command, $postData, $adminuser);
+			$table = 'tblhosting';
+			try {
+    		$updatedUserCount = Capsule::table($table)
+        	->where('id', $params["serviceid"])
+        	->update(
+          	[
+            	'password' => $results['password'],
+      			]
+        	);
+			} catch (\Exception $e) {
+    		echo "Password update failed.Bad Capsule function. {$e->getMessage()}";
+			}
+			$password = $params["customfields"]['password'];
+		}
 
-				if(isset($params['configoptions']['traffic'])) {
-					$traffic = $params['configoptions']['traffic']*1024*1048576;
-					$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
-					if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
-					{
-						$result = 'success';
-					}
-					else {
-						$result='Error during CreatingAccount-Inserting into user';
-					}
-			  } else {
-						if (!empty($params['configoption4']))
-						{
-								$max = $params['configoption4'];
-						}
-						if(isset($max))
-						{
-								$traffic = $max*1024*1048576;
-						} else {
-								$traffic = 53687091200;
-						}
-						$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
+		if(isset($params['configoptions']['traffic']))
+		{
+			$traffic = $params['configoptions']['traffic']*1024*1048576;
+			$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
+
+			if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
+			{
+				$result = 'success';
+			}
+			else
+			{
+				$result='Error during CreatingAccount-Inserting into user';
+			}
+
+		}
+		else
+		{
+			if (!empty($params['configoption4']))
+			{
+				$max = $params['configoption4'];
+			}
+
+			if(isset($max))
+			{
+				$traffic = $max*1024*1048576;
+			} else {
+				$traffic = 53687091200;
+			}
+
+			$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
 						if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
 						{
 								$result='success';
@@ -237,7 +222,7 @@ function shadowsocks_TerminateAccount($params) {
 			}
 	}
 	catch(PDOException $e){
-			die('PDO error:' . $e->getMessage());
+			$result = 'PDO error:' . $e->getMessage();
 	}
 	return $result;
 }
