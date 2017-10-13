@@ -12,10 +12,10 @@ if (!defined("WHMCS")) {
 */
 
 
-function provisioningmodule_MetaData()
+function SSAdmin_MetaData()
 {
     return array(
-        'DisplayName' => 'Shadowsocks',
+        'DisplayName' => 'SSAdmin for shadowsocks-manyuser',
         'APIVersion' => '1.1', // Use API Version 1.1
         'RequiresServer' => true, // Set true if module requires a server to work
     );
@@ -523,7 +523,7 @@ function shadowsocks_qrcode($params) {
 	catch(PDOException $e){
 		die('Select userinfo Failed in SSQrCode' . $e->getMessage());
 	}
-  
+
   $Port = $Query['port'];
   $password = $Query['passwd'];
 	if (!empty($node) || isset($node)) {
@@ -531,12 +531,12 @@ function shadowsocks_qrcode($params) {
 		foreach ($str as $key => $val) {
 			$origincode = $encrypt.':'.$password."@".$str[$key].':'.$Port; // method[-auth]:password@hostname:port ,-auth for OTA.
 			$output = 'ss://'.base64_encode($origincode);
-      $imgs .= '<img src="https://example.com/modules/servers/SSAdmin_Manyuser/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
+      $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 		}
 	} else {
 		$origincode = $encrypt.':'.$password."@".$params['serverip'].':'.$Port;//ss://method[-auth]:password@hostname:port
 		$output = 'ss://'.base64_encode($origincode);
-    $imgs = '<img src="https://example.com/modules/servers/SSAdmin_Manyuser/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
+    $imgs = '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 	}
   //return $origincode;
 	//return $output;

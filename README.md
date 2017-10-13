@@ -22,7 +22,7 @@ SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyus
 
 You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong>
 
-    $imgs .= '<img src="https://example.com/modules/servers/SSAdmin_Manyuser/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
+    $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 
 to ensure your QR code could be loaded.
 
