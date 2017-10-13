@@ -5,6 +5,21 @@
 **/
 use WHMCS\Database\Capsule;
 
+/* Needs to be enabled after debugging
+if (!defined("WHMCS")) {
+    die("This file cannot be accessed directly");
+}
+*/
+
+
+function provisioningmodule_MetaData()
+{
+    return array(
+        'DisplayName' => 'Shadowsocks',
+        'APIVersion' => '1.1', // Use API Version 1.1
+        'RequiresServer' => true, // Set true if module requires a server to work
+    );
+}
 //Function to show config options in product settings
 function ssmu_ConfigOptions() {
 	return [
@@ -508,23 +523,20 @@ function shadowsocks_qrcode($params) {
 	catch(PDOException $e){
 		die('Select userinfo Failed in SSQrCode' . $e->getMessage());
 	}
-	/*$mysql = mysql_connect($params['serverip'],$params['serverusername'],$params['serverpassword']);
-	$Query = mysql_query("SELECT port,passwd FROM user WHERE pid='".$params['serviceid']."'",$mysql);
-	$Query = mysql_fetch_array($Query);*/
+  
   $Port = $Query['port'];
   $password = $Query['passwd'];
 	if (!empty($node) || isset($node)) {
 		$str = explode(';', $node);
 		foreach ($str as $key => $val) {
-			$origincode = $encrypt.':'.$password."@".$str[$key].':'.$Port;//ss://method[-auth]:password@hostname:port
+			$origincode = $encrypt.':'.$password."@".$str[$key].':'.$Port; // method[-auth]:password@hostname:port ,-auth for OTA.
 			$output = 'ss://'.base64_encode($origincode);
-			//QRcode::png($output);
-      $imgs .= '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+      $imgs .= '<img src="https://example.com/modules/servers/SSAdmin_Manyuser/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 		}
 	} else {
 		$origincode = $encrypt.':'.$password."@".$params['serverip'].':'.$Port;//ss://method[-auth]:password@hostname:port
 		$output = 'ss://'.base64_encode($origincode);
-    $imgs = '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+    $imgs = '<img src="https://example.com/modules/servers/SSAdmin_Manyuser/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 	}
   //return $origincode;
 	//return $output;
