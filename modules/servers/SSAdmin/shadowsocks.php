@@ -21,46 +21,46 @@ function SSAdmin_MetaData()
     );
 }
 //Function to show config options in product settings
-function ssmu_ConfigOptions() {
+function SSAdmin_ConfigOptions() {
 	return [
 		"dbname" => [
-			"FriendlyName" => "Database",
-			"Type" => "text",
+			"FriendlyName" => "Database", // First the database name.
+			"Type" => "text",             //$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 			"Size" => "25",
 			"Description" => "User database name",
 			"Default" => "shadowsocks",
 		],
 		"encrypt" => [
-			"FriendlyName" => "Encryption",
-			"Type" => "text",
+			"FriendlyName" => "Encryption", // Second the encryption method (like CHACHA20).
+			"Type" => "text",               //echo "Encryption: ".$params['configoption2'];
 			"Size" => "25",
 			"Description" => "Transfer encrypt method",
 			"Default" => "AES-256-CFB",
 		],
 		"port" => [
-			"FriendlyName" => "Initial Port",
-			"Type" => "text",
+			"FriendlyName" => "Initial Port", // Third the initial port for default.
+			"Type" => "text",                 //$startport = $params['configoption3']; Check the availibility before using!
 			"Size" => "25",
 			"Description" => "Default port if no users exist in current table",
 			"Default" => "8000",
 		],
 		"traffic" => [
-			"FriendlyName" => "Default Traffic(GiB)",
-			"Type" => "text",
+			"FriendlyName" => "Default Traffic(GiB)", // Fourth the default traffic per payment period (as the traffic usage will be reset by renewing).
+			"Type" => "text",                         // $traffic = $params['configoption4']*1024*1024*1024; (Remember to transfer your Gibi Bytes  to Bytes.)
 			"Size" => "25",
 			"Description" => "Default bandwidth if not set specially",
 			"Default" => "10",
 		],
 		"server" => [
-			"FriendlyName" => "Server List",
-			"Type" => "textarea",
-			"Description" => "All the ss-server in this product",
+			"FriendlyName" => "Server List", // Last as the list of the servers.
+			"Type" => "textarea", 
+			"Description" => "All the ss-server in this product. Use semicolon in English (;) to devide if you have more than one.",
 		],
 	];
 }
 
 //The function to check the database for the new port.
-function shadowsocks_nextport($params) {
+function SSAdmin_nextport($params) {
 	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
 			$start = 8000;
 	} else {
@@ -100,11 +100,11 @@ function shadowsocks_nextport($params) {
 	return $result;
 }
 
-function shadowsocks_CreateAccount($params) {
+function SSAdmin_CreateAccount($params) {
 	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
   $password 			= $params["password"]; //
 
-	$port = shadowsocks_nextport($params);
+	$port = SSAdmin_nextport($params);
 	// Check the returned code.
 	if($port = 0)
 	{
@@ -216,7 +216,7 @@ function shadowsocks_CreateAccount($params) {
   	return $result;
 }
 
-function shadowsocks_TerminateAccount($params) {
+function SSAdmin_TerminateAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -242,7 +242,7 @@ function shadowsocks_TerminateAccount($params) {
 	return $result;
 }
 
-function shadowsocks_SuspendAccount($params) {
+function SSAdmin_SuspendAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -289,7 +289,7 @@ function shadowsocks_SuspendAccount($params) {
 
 
 
-function shadowsocks_UnSuspendAccount($params) {
+function SSAdmin_UnSuspendAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -329,7 +329,7 @@ function shadowsocks_UnSuspendAccount($params) {
 	return $result;
 }
 
-function shadowsocks_ChangePassword($params) {
+function SSAdmin_ChangePassword($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -388,7 +388,7 @@ function shadowsocks_ChangePassword($params) {
 	return $result;
 }
 
-function shadowsocks_ChangePackage($params) {
+function SSAdmin_ChangePackage($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -424,7 +424,7 @@ function shadowsocks_ChangePackage($params) {
 	}
 }
 
-function shadowsocks_Renew($params) {
+function SSAdmin_Renew($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -448,7 +448,7 @@ function shadowsocks_Renew($params) {
 	}
 }
 
-function shadowsocks_node($params) {
+function SSAdmin_node($params) {
 	$node = $params['configoption5'];
 	if (!empty($node) || isset($node)) {
 		$str = explode(';', $node);
@@ -463,7 +463,7 @@ function shadowsocks_node($params) {
 }
 
 
-function shadowsocks_link($params) {
+function SSAdmin_link($params) {
 	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 
@@ -502,7 +502,7 @@ function shadowsocks_link($params) {
 	return $output;
 }
 
-function shadowsocks_qrcode($params) {
+function SSAdmin_qrcode($params) {
 	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
@@ -543,7 +543,7 @@ function shadowsocks_qrcode($params) {
   return $imgs;
 }
 
-function shadowsocks_RstTraffic($params) {
+function SSAdmin_RstTraffic($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -568,7 +568,7 @@ function shadowsocks_RstTraffic($params) {
 	}
 }
 
-function shadowsocks_ClientArea($params) {
+function SSAdmin_ClientArea($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -592,9 +592,9 @@ function shadowsocks_ClientArea($params) {
 		$traffic = round($traffic,2);
 		$Usage = round($Usage,2);
 		$Free = round($Free,2);
-		$node = shadowsocks_node($params);
-    $sslink = shadowsocks_link($params);
-		$ssqr = shadowsocks_qrcode($params);
+		$node = SSAdmin_node($params);
+    $sslink = SSAdmin_link($params);
+		$ssqr = SSAdmin_qrcode($params);
         //debug
         $decodeQuery = json_encode($Query);
 	}
@@ -711,7 +711,7 @@ function shadowsocks_ClientArea($params) {
     return $html;
 }
 
-function shadowsocks_AdminServicesTabFields($params) {
+function SSAdmin_AdminServicesTabFields($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -750,7 +750,7 @@ function shadowsocks_AdminServicesTabFields($params) {
 	}
 }
 
-function shadowsocks_AdminCustomButtonArray() {
+function SSAdmin_AdminCustomButtonArray() {
   $buttonarray = array(
    "Reset Traffic" => "RstTraffic",
   );
