@@ -89,18 +89,18 @@ function SSAdmin_NextPort($params) {
 			$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1"); //Check the last port
 			$last = $stmt2->fetch(PDO::FETCH_ASSOC);
 			// Check whether the ports have been used up
-			if ($lastport['port'] > 65534)
+			if ($last['port'] >= 65535)
 			{
 				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
 			}	else {
-				$result = $lastport['port']+1; // If not, then use next port.
+				$result = $last['port']+1; // If not, then use next port.
 			}
 		}	else {
 			$result=$start; // If no service in the table, will create accounts with the default port.
 		}
   }
 	catch(PDOException $e){
-      $result = 1;
+      $result = "F";
   }
 	return $result;
 }
@@ -111,11 +111,11 @@ function SSAdmin_CreateAccount($params) {
 
 	$port = SSAdmin_NextPort($params);
 	// Check the returned code.
-	if($port = 0)
+	if($port == 0)
 	{
 		return "Ports exceeded.";
 	}
-	elseif($port = 1) {
+	elseif($port == "F") {
 		return "PDO error in port checking.";
 	}
 
@@ -180,7 +180,8 @@ function SSAdmin_CreateAccount($params) {
 
 		if(isset($params['configoptions']['traffic']))
 		{
-			$traffic = $params['configoptions']['traffic']*1024*1048576;
+      $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+      $traffic = $traffic_GB*1024*1048576;
 			$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
 
 			if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
@@ -199,7 +200,6 @@ function SSAdmin_CreateAccount($params) {
 			{
 				$max = $params['configoption4'];
 			}
-
 			if(isset($max))
 			{
 				$traffic = $max*1024*1048576;
@@ -406,7 +406,8 @@ function SSAdmin_ChangePackage($params) {
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
 		if(isset($params['configoptions']['traffic'])) {
-					$traffic = $params['configoptions']['traffic']*1024*1048576;
+          $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+          $traffic = $traffic_GB*1024*1048576;
 					$stmt = $pdo->prepare("UPDATE user SET transfer_enable=:traffic WHERE pid=:serviceid");
 					$stmt->execute(array(':traffic' => $traffic, ':serviceid' => $params['serviceid']));
 					return 'success';
@@ -725,8 +726,8 @@ function SSAdmin_AdminServicesTabFields($params) {
 			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
 	);
 
-	if (isset($params['configoptions']['traffic'])) {
-			$traffic = $params['configoptions']['traffic']*1024;
+	if (isset($params['configoptions']['Traffic'])) {
+			$traffic = $params['configoptions']['Traffic']*1024;
 	} else if(!empty($params['configoption4'])) {
 			$traffic = $params['configoption4']*1024;
 	} else {
