@@ -15,12 +15,17 @@ if (!defined("WHMCS")) {
 function SSAdmin_MetaData()
 {
     return array(
-        'DisplayName' => 'SSAdmin for shadowsocks-manyuser',
+        'DisplayName' => 'ShadowsocksAdmin',
         'APIVersion' => '1.1', // Use API Version 1.1
         'RequiresServer' => true, // Set true if module requires a server to work
     );
 }
 //Function to show config options in product settings
+//$params['configoption1'] -> dbname
+//$params['configoption2'] -> encrypt
+//$params['configoption3'] -> port
+//$params['configoption4'] -> traffic
+//$params['configoption5'] -> server
 function SSAdmin_ConfigOptions() {
 	return [
 		"dbname" => [
@@ -53,16 +58,16 @@ function SSAdmin_ConfigOptions() {
 		],
 		"server" => [
 			"FriendlyName" => "Server List", // Last as the list of the servers.
-			"Type" => "textarea", 
+			"Type" => "textarea",
 			"Description" => "All the ss-server in this product. Use semicolon in English (;) to devide if you have more than one.",
 		],
 	];
 }
 
 //The function to check the database for the new port.
-function SSAdmin_nextport($params) {
+function SSAdmin_NextPort($params) {
 	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
-			$start = 8000;
+			$start = 8800;
 	} else {
 			$start = $params['configoption3'];
 	}
@@ -104,7 +109,7 @@ function SSAdmin_CreateAccount($params) {
 	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
   $password 			= $params["password"]; //
 
-	$port = SSAdmin_nextport($params);
+	$port = SSAdmin_NextPort($params);
 	// Check the returned code.
 	if($port = 0)
 	{
