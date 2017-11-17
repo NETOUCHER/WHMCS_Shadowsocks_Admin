@@ -4,6 +4,11 @@ This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an P
 
 # Version Update:
 
+3.0.2 Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than clear the used traffic. Function name: <strong>AddTraffic</strong>
+
+3.0.0 Configuration rearranged. <strong>Do not support</strong> old version anymore. Module name changed to <strong>SSAdmin</strong>.
+      - The ability to reset traffic when the invoice get paid and the service get renewed. Execute <strong>RstTraffic</strong> in <strong>SSAdmin_Renew</strong> to make it happen (default)
+
 2.0.2 Integrated with <strong>QR code generator</strong>. *You must configure the module manually.*
 
 2.0.1 A Shadowsocks link generator.
