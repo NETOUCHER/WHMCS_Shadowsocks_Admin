@@ -178,7 +178,7 @@ function SSAdmin_CreateAccount($params) {
 			$password = $params["customfields"]['password'];
 		}
 
-		if(isset($params['configoptions']['traffic']))
+		if(isset($params['configoptions']['Traffic']))
 		{
       $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
       $traffic = $traffic_GB*1024*1048576;
@@ -405,7 +405,7 @@ function SSAdmin_ChangePackage($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		if(isset($params['configoptions']['traffic'])) {
+		if(isset($params['configoptions']['Traffic'])) {
           $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
           $traffic = $traffic_GB*1024*1048576;
 					$stmt = $pdo->prepare("UPDATE user SET transfer_enable=:traffic WHERE pid=:serviceid");
@@ -586,7 +586,7 @@ function SSAdmin_ClientArea($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$traffic = $params['configoptions']['traffic'];
+		$traffic = $params['configoptions']['Traffic'];
 		$stmt = $pdo->prepare("SELECT sum(u+d),port,passwd,transfer_enable FROM user WHERE pid=:serviceid");
 		$stmt->execute(array(':serviceid' => $params['serviceid']));
 		$Query = $stmt->fetch(PDO::FETCH_BOTH);
