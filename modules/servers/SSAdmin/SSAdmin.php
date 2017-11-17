@@ -1,8 +1,10 @@
 <?php
+
 /**
  * @author Gaukas
- * @version 3.0.0
+ * @version 3.1.0
 **/
+
 use WHMCS\Database\Capsule;
 
 /* Needs to be enabled after debugging
@@ -10,7 +12,6 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 */
-
 
 function SSAdmin_MetaData()
 {
@@ -20,12 +21,7 @@ function SSAdmin_MetaData()
         'RequiresServer' => true, // Set true if module requires a server to work
     );
 }
-//Function to show config options in product settings
-//$params['configoption1'] -> dbname
-//$params['configoption2'] -> encrypt
-//$params['configoption3'] -> port
-//$params['configoption4'] -> traffic
-//$params['configoption5'] -> server
+
 function SSAdmin_ConfigOptions() {
 	return [
 		"dbname" => [
@@ -62,47 +58,6 @@ function SSAdmin_ConfigOptions() {
 			"Description" => "All the ss-server in this product. Use semicolon in English (;) to devide if you have more than one.",
 		],
 	];
-}
-
-//The function to check the database for the new port.
-function SSAdmin_NextPort($params) {
-	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
-			$start = 8800;
-	} else {
-			$start = $params['configoption3'];
-	}
-	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-	$username = $params['serverusername'];
-	$pwd = $params['serverpassword'];
-
-	$attr = array(
-	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-	);
-
-  try{
-		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$stmt = $pdo->query("SELECT port FROM user");
-		$select = $stmt->fetch(PDO::FETCH_ASSOC);
-		// Check whether there are former services in the table, will return a port as the last port + 1.
-		if(!$select == "")
-		{
-			$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1"); //Check the last port
-			$last = $stmt2->fetch(PDO::FETCH_ASSOC);
-			// Check whether the ports have been used up
-			if ($last['port'] >= 65535)
-			{
-				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
-			}	else {
-				$result = $last['port']+1; // If not, then use next port.
-			}
-		}	else {
-			$result=$start; // If no service in the table, will create accounts with the default port.
-		}
-  }
-	catch(PDOException $e){
-      $result = "F";
-  }
-	return $result;
 }
 
 function SSAdmin_CreateAccount($params) {
@@ -292,8 +247,6 @@ function SSAdmin_SuspendAccount($params) {
 		return $result;
 	}
 
-
-
 function SSAdmin_UnSuspendAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
@@ -431,6 +384,60 @@ function SSAdmin_ChangePackage($params) {
 }
 
 function SSAdmin_Renew($params) {
+  $result = SSAdmin_RstTraffic($params);
+  //$result = SSAdmin_AddTraffic($params);
+  switch ($result){
+    case 'success':
+      return 'success';
+    case false:
+      return 'Failed to execute PDO SQL query to reset/add traffic. Check the database.';
+    default:
+      return $result;
+	}
+}
+//
+//The function NextPort will send a query to database to know the next port number
+function SSAdmin_NextPort($params) {
+	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
+			$start = 8800;
+	} else {
+			$start = $params['configoption3'];
+	}
+	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
+
+	$attr = array(
+	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
+
+  try{
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->query("SELECT port FROM user");
+		$select = $stmt->fetch(PDO::FETCH_ASSOC);
+		// Check whether there are former services in the table, will return a port as the last port + 1.
+		if(!$select == "")
+		{
+			$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1"); //Check the last port
+			$last = $stmt2->fetch(PDO::FETCH_ASSOC);
+			// Check whether the ports have been used up
+			if ($last['port'] >= 65535)
+			{
+				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
+			}	else {
+				$result = $last['port']+1; // If not, then use next port.
+			}
+		}	else {
+			$result=$start; // If no service in the table, will create accounts with the default port.
+		}
+  }
+	catch(PDOException $e){
+      $result = "F";
+  }
+	return $result;
+}
+//The function RstTraffic will operate the database as setting the upload and download traffic to zero.
+function SSAdmin_RstTraffic($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -442,18 +449,60 @@ function SSAdmin_Renew($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$stmt = $pdo->prepare('SELECT sum(u+d) FROM user WHERE pid=:serviceid');
-		$stmt->execute(array(':serviceid' => $serviceid));
-		$Query = $stmt->fetch(PDO::FETCH_ASSOC);
-		$stmt2 = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
-		$stmt2->execute(array(':serviceid' => $params['serviceid']));
-		return 'success';
+		$stmt = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
+		if($stmt->execute(array(':serviceid' => $params['serviceid']))){
+			return 'success';
+		}
+		else {
+			return false;
+		}
 	}
 	catch(PDOException $e){
-		die('Renew failed. ' . $e->getMessage());
+		die('PDO Error occurred in resetting traffic' . $e->getMessage());
 	}
 }
+//The function AddTraffic will operate the database as set transfer_enable as transfer_enable+$params[configoptions][Traffic]. An alternative idea for traffic calculation.
+function SSAdmin_AddTraffic($params) {
+	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
 
+	$attr = array(
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
+
+  if(isset($params['configoptions']['Traffic']))
+  {
+    $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+    $traffic = $traffic_GB*1024*1048576;
+  }
+  else
+  {
+    if (!empty($params['configoption4']))
+    {
+      $traffic = $params['configoption4']*1024*1048576;
+    } else {
+      $traffic = 53687091200;
+    }
+  }
+
+	try
+	{
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->prepare("UPDATE `user` SET `transfer_enable`=`transfer_enable`+:traffic WHERE `pid`=:serviceid");
+		if($stmt->execute(array(':traffic' => $traffic, ':serviceid' => $params['serviceid']))){
+			return 'success';
+		}
+		else {
+			return false;
+		}
+	}
+	catch(PDOException $e){
+		die('PDO Error occurred in adding traffic' . $e->getMessage());
+	}
+}
+//
+//The function to divide every node by the character ';' and output as a node for each line in HTML (devide with <br>)
 function SSAdmin_node($params) {
 	$node = $params['configoption5'];
 	if (!empty($node) || isset($node)) {
@@ -467,8 +516,7 @@ function SSAdmin_node($params) {
 	}
 	return $html;
 }
-
-
+//Show the SS link as ss://{method[-auth]:password@hostname:port} (the string in {} was encrypted by base64)
 function SSAdmin_link($params) {
 	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
@@ -547,31 +595,6 @@ function SSAdmin_qrcode($params) {
   //return $origincode;
 	//return $output;
   return $imgs;
-}
-
-function SSAdmin_RstTraffic($params) {
-	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-	$username = $params['serverusername'];
-	$pwd = $params['serverpassword'];
-
-	$attr = array(
-			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-	);
-
-	try
-	{
-		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$stmt = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
-		if($stmt->execute(array(':serviceid' => $params['serviceid']))){
-			return 'success';
-		}
-		else {
-			return false;
-		}
-	}
-	catch(PDOException $e){
-		die('Select userinfo Failed in traffic reset' . $e->getMessage());
-	}
 }
 
 function SSAdmin_ClientArea($params) {
@@ -759,6 +782,7 @@ function SSAdmin_AdminServicesTabFields($params) {
 function SSAdmin_AdminCustomButtonArray() {
   $buttonarray = array(
    "Reset Traffic" => "RstTraffic",
+   "Add Traffic" => "AddTraffic",
   );
   return $buttonarray;
 }
