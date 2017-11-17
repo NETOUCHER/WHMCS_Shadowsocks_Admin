@@ -22,11 +22,11 @@ SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyus
 
 You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong>
 
-    $imgs .= '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+    $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 
-to ensure your QR code could be loaded. |
+to ensure your QR code could be loaded.
 
-Then you could edit the domain name from <strong>example.com</strong> to yours in <strong>QR/qrcode.php</strong>
+Then you could edit the domain name from <strong>example.com</strong> to yours in <strong>lib/QR_generator/qrcode.php</strong>
 
     if(strpos($_SERVER['HTTP_REFERER'], 'example.com') == FALSE)
        {
@@ -52,7 +52,7 @@ Including the PHP implementation of QR Code 2-D barcode generator (ver. 1.1.4)
 Copyright (C) 2010 by Dominik Dzienia
 http://sourceforge.net/projects/phpqrcode/
 
-Which is based on C libqrencode library (ver. 3.1.1) 
+Which is based on C libqrencode library (ver. 3.1.1)
 Copyright (C) 2006-2010 by Kentaro Fukuchi
 http://megaui.net/fukuchi/works/qrencode/index.en.html
 

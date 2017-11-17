@@ -1,212 +1,182 @@
 <?php
+
 /**
  * @author Gaukas
- * @version 2.0.2
- */
+ * @version 3.1.0
+**/
+
 use WHMCS\Database\Capsule;
 
-function shadowsocks_ConfigOptions() {
-	$configarray = array(
-	"Database" => array("Type" => "text", "Size" => "25"),
-	"Encryption" 	=> array("Type" => "text", "Size" => "25"),
-	"Init port" 	=> array("Type" => "text", "Size" => "25"),
-	"Server List" => array("Type" => "textarea"),
-	"Basic Traffic (Gibibytes)" => array("Type" => "textarea")
-	);
-	return $configarray;
+/* Needs to be enabled after debugging
+if (!defined("WHMCS")) {
+    die("This file cannot be accessed directly");
+}
+*/
+
+function SSAdmin_MetaData()
+{
+    return array(
+        'DisplayName' => 'ShadowsocksAdmin',
+        'APIVersion' => '1.1', // Use API Version 1.1
+        'RequiresServer' => true, // Set true if module requires a server to work
+    );
 }
 
-function shadowsocks_mysql($params) {
-	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-	$username = $params['serverusername'];
-	$pwd = $params['serverpassword'];
-
-	$attr = array(
-	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-	);
-
-  try{
-      //$pdo = new PDO($dsn, $username, $pwd, $attr);
-			//if($stmt = $pdo->query("alter table user add pid varchar(50) not null"))
-			//{
-					$result=true;
-			//}
-  }
-	catch(PDOException $e){
-      die('Cannot add.' . $e->getMessage());
-  }
-	return $result;
+function SSAdmin_ConfigOptions() {
+	return [
+		"dbname" => [
+			"FriendlyName" => "Database", // First the database name.
+			"Type" => "text",             //$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+			"Size" => "25",
+			"Description" => "User database name",
+			"Default" => "shadowsocks",
+		],
+		"encrypt" => [
+			"FriendlyName" => "Encryption", // Second the encryption method (like CHACHA20).
+			"Type" => "text",               //echo "Encryption: ".$params['configoption2'];
+			"Size" => "25",
+			"Description" => "Transfer encrypt method",
+			"Default" => "AES-256-CFB",
+		],
+		"port" => [
+			"FriendlyName" => "Initial Port", // Third the initial port for default.
+			"Type" => "text",                 //$startport = $params['configoption3']; Check the availibility before using!
+			"Size" => "25",
+			"Description" => "Default port if no users exist in current table",
+			"Default" => "8000",
+		],
+		"traffic" => [
+			"FriendlyName" => "Default Traffic(GiB)", // Fourth the default traffic per payment period (as the traffic usage will be reset by renewing).
+			"Type" => "text",                         // $traffic = $params['configoption4']*1024*1024*1024; (Remember to transfer your Gibi Bytes  to Bytes.)
+			"Size" => "25",
+			"Description" => "Default bandwidth if not set specially",
+			"Default" => "10",
+		],
+		"server" => [
+			"FriendlyName" => "Server List", // Last as the list of the servers.
+			"Type" => "textarea",
+			"Description" => "All the ss-server in this product. Use semicolon in English (;) to devide if you have more than one.",
+		],
+	];
 }
 
-function shadowsocks_CreateNewPort($params) {
-	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
-		$start = 9100;
-	} else {
-		$start = $params['configoption3'];
+function SSAdmin_CreateAccount($params) {
+	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
+  $password 			= $params["password"]; //
+
+	$port = SSAdmin_NextPort($params);
+	// Check the returned code.
+	if($port == 0)
+	{
+		return "Ports exceeded.";
 	}
-	$end = 65535;
-	shadowsocks_mysql($params);
+	elseif($port == "F") {
+		return "PDO error in port checking.";
+	}
+
+	// Use WHMCS Capsule to get adminusername for API
+	$pdo = Capsule::connection()->getPdo();
+	$pdo->beginTransaction();
+	try {
+		$stmt = $pdo->query("SELECT username FROM tbladmins");
+		$adminusername = $stmt->fetch(PDO::FETCH_ASSOC);
+		$pdo->commit();
+	} catch (\Exception $e) {
+		$pdo->rollBack();
+		return "Got error when trying to get adminusername {$e->getMessage()}";
+	}
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
-
 	$attr = array(
-	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+		PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
 	);
 
-  try{
-      $pdo = new PDO($dsn, $username, $pwd, $attr);
-			$stmt = $pdo->query("SELECT port FROM user");
-			$select = $stmt->fetch(PDO::FETCH_ASSOC);
-			if(!$select == "")
-			{
-					$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1");
-
-					$lastport = $stmt2->fetch(PDO::FETCH_ASSOC);
-					$result = $lastport['port']+1;
-					if ($result > $end)
-					{
-							$result = "Port exceeds the maximum value.";
-					}
-				}
-					else
-					{
-							$result=$start;
-					}
-  }
+	try
+	{
+		$pdo2 = new PDO($dsn, $username, $pwd, $attr);
+		$stmt2 = $pdo2->prepare('SELECT pid FROM user WHERE pid=:serviceid');
+		$stmt2->execute(array(':serviceid' => $serviceid));
+		$select = $stmt2->fetch(PDO::FETCH_ASSOC);
+	}
 	catch(PDOException $e){
-      die('Cannot create new port.' . $e->getMessage());
-  }
-	return $result;
-}
+		return 'Cannot find pid.' . $e->getMessage();
+	}
 
-function shadowsocks_CreateAccount($params) {
-	$serviceid			= $params["serviceid"]; # Unique ID of the product/service in the WHMCS Database
-    $pid 				= $params["pid"]; # Product/Service ID
-    $producttype		= $params["producttype"]; # Product Type: hostingaccount, reselleraccount, server or other
-    $domain 			= $params["domain"];
-  	$username 			= $params["username"];
-  	$password 			= $params["password"];
-    $clientsdetails 	= $params["clientsdetails"]; # Array of clients details - firstname, lastname, email, country, etc...
-    $customfields 		= $params["customfields"]; # Array of custom field values for the product
-    $configoptions 		= $params["configoptions"]; # Array of configurable option values for the product
-
-    # Product module option settings from ConfigOptions array above
-    $configoption1 		= $params["configoption1"];
-    $configoption2 		= $params["configoption2"];
-
-    # Additional variables if the product/service is linked to a server
-    $server 			= $params["server"]; # True if linked to a server
-    $serverid 			= $params["serverid"];
-    $serverip 			= $params["serverip"];
-    $serverusername 	= $params["serverusername"];
-    $serverpassword		= $params["serverpassword"];
-    $serveraccesshash 	= $params["serveraccesshash"];
-    $serversecure 		= $params["serversecure"]; # If set, SSL Mode is enabled in the server config
-
-		$pdo = Capsule::connection()->getPdo();
-		$pdo->beginTransaction();
-
-		try {
-		    $stmt = $pdo->query("SELECT username FROM tbladmins");
-				$adminusername = $stmt->fetch(PDO::FETCH_ASSOC);
-		    $pdo->commit();
-		} catch (\Exception $e) {
-		    $result="Got error when trying to get adminusername {$e->getMessage()}";
-		    $pdo->rollBack();
-		}
-		$port = shadowsocks_CreateNewPort($params);
-
-		$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-		$username = $params['serverusername'];
-		$pwd = $params['serverpassword'];
-
-		$attr = array(
-		    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-		);
-
-	  try
-		{
-	      $pdo2 = new PDO($dsn, $username, $pwd, $attr);
-				$stmt2 = $pdo2->prepare('SELECT pid FROM user WHERE pid=:serviceid');
-				$stmt2->execute(array(':serviceid' => $serviceid));
-				$select = $stmt2->fetch(PDO::FETCH_ASSOC);
-		}
-		catch(PDOException $e){
-	      die('Cannot find pid.' . $e->getMessage());
-	  }
-
-  		if (!empty($select['pid'])) {
-  		 	$result = "Service already exists.";
-  		} else {
-  			if (isset($params['customfields']['password'])) {
-
-				$command = 'EncryptPassword';
-				$postData = array(
-	    		'password2' => $params["customfields"]['password'],
-				);
-				try {
-						$adminuser = $adminusername['username'];
-						}
-				 catch (Exception $e)
-				 {
-					 	die("Failure in adminuser define. No username in the ARRAY adminusername could be found.");
-				 }
+  if (!empty($select['pid'])) {
+		$result = "Service already exists.";
+  } else {
+		if (isset($params['customfields']['password'])) {
+			$command = 'EncryptPassword';
+			$postData = array(
+	  		'password2' => $params["customfields"]['password'],
+			);
+			try {
 				$adminuser = $adminusername['username'];
-				$results = localAPI($command, $postData, $adminuser);
-				$table = 'tblhosting';
-				try {
-    				$updatedUserCount = Capsule::table($table)
-        				->where('id', $params["serviceid"])
-        				->update(
-            				[
-                				'password' => $results['password'],
-            				]
-        				);
-						}
-				catch (\Exception $e)  {
-    				echo "Password update failed.Bad Capsule function. {$e->getMessage()}";
-						}
-				$password = $params["customfields"]['password'];
-				}
-				//Create Account
+			} catch (Exception $e) {
+				die("Failure in adminuser define. No username in the ARRAY adminusername could be found.");
+			}
+			$adminuser = $adminusername['username'];
+			$results = localAPI($command, $postData, $adminuser);
+			$table = 'tblhosting';
+			try {
+    		$updatedUserCount = Capsule::table($table)
+        	->where('id', $params["serviceid"])
+        	->update(
+          	[
+            	'password' => $results['password'],
+      			]
+        	);
+			} catch (\Exception $e) {
+    		echo "Password update failed.Bad Capsule function. {$e->getMessage()}";
+			}
+			$password = $params["customfields"]['password'];
+		}
 
-				if(isset($params['configoptions']['traffic'])) {
-					$traffic = $params['configoptions']['traffic']*1024*1048576;
-					$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
-					if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
-					{
-						$result = 'success';
-					}
-					else {
-						$result='Error during CreatingAccount-Inserting into user';
-					}
-			  } else {
-						if (!empty($params['configoption5']))
-						{
-								$max = $params['configoption5'];
-						}
-						if(isset($max))
-						{
-								$traffic = $max*1024*1048576;
-						} else {
-								$traffic = 53687091200;
-						}
-						$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
+		if(isset($params['configoptions']['Traffic']))
+		{
+      $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+      $traffic = $traffic_GB*1024*1048576;
+			$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
+
+			if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
+			{
+				$result = 'success';
+			}
+			else
+			{
+				$result='Error during CreatingAccount-Inserting into user';
+			}
+
+		}
+		else
+		{
+			if (!empty($params['configoption4']))
+			{
+				$max = $params['configoption4'];
+			}
+			if(isset($max))
+			{
+				$traffic = $max*1024*1048576;
+			} else {
+				$traffic = 53687091200;
+			}
+
+			$stmt3 = $pdo2->prepare("INSERT INTO user(pid,passwd,port,transfer_enable) VALUES (:serviceid,:password,:port,:traffic)");
 						if($stmt3->execute(array(':serviceid'=>$params['serviceid'], ':password'=>$password, ':port'=>$port, ':traffic'=>$traffic)))
 						{
 								$result='success';
 						}
 						else
 						{
-								$result = 'Error during CreatingAccount-Inserting into user';
+								$result = 'Error. Could not Creat Account.';
 						}
 				}
   	}
   	return $result;
 }
 
-function shadowsocks_TerminateAccount($params) {
+function SSAdmin_TerminateAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -223,16 +193,16 @@ function shadowsocks_TerminateAccount($params) {
 			{
 				$result = 'success';
 			} else {
-				$result = 'Error. Cloud not Terminate this Account.';
+				$result = 'Error. Could not Terminate this Account.';
 			}
 	}
 	catch(PDOException $e){
-			die('Cannot find pid.' . $e->getMessage());
+			$result = 'PDO error:' . $e->getMessage();
 	}
 	return $result;
 }
 
-function shadowsocks_SuspendAccount($params) {
+function SSAdmin_SuspendAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -277,9 +247,7 @@ function shadowsocks_SuspendAccount($params) {
 		return $result;
 	}
 
-
-
-function shadowsocks_UnSuspendAccount($params) {
+function SSAdmin_UnSuspendAccount($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -319,7 +287,7 @@ function shadowsocks_UnSuspendAccount($params) {
 	return $result;
 }
 
-function shadowsocks_ChangePassword($params) {
+function SSAdmin_ChangePassword($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -378,7 +346,7 @@ function shadowsocks_ChangePassword($params) {
 	return $result;
 }
 
-function shadowsocks_ChangePackage($params) {
+function SSAdmin_ChangePackage($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -390,14 +358,15 @@ function shadowsocks_ChangePackage($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		if(isset($params['configoptions']['traffic'])) {
-					$traffic = $params['configoptions']['traffic']*1024*1048576;
+		if(isset($params['configoptions']['Traffic'])) {
+          $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+          $traffic = $traffic_GB*1024*1048576;
 					$stmt = $pdo->prepare("UPDATE user SET transfer_enable=:traffic WHERE pid=:serviceid");
 					$stmt->execute(array(':traffic' => $traffic, ':serviceid' => $params['serviceid']));
 					return 'success';
 		} else {
-					if (!empty($params['configoption5'])) {
-						$max = $params['configoption5'];
+					if (!empty($params['configoption4'])) {
+						$max = $params['configoption4'];
 					}
 					if(isset($max)) {
 						$traffic = $max*1024*1048576;
@@ -414,7 +383,61 @@ function shadowsocks_ChangePackage($params) {
 	}
 }
 
-function shadowsocks_Renew($params) {
+function SSAdmin_Renew($params) {
+  $result = SSAdmin_RstTraffic($params);
+  //$result = SSAdmin_AddTraffic($params);
+  switch ($result){
+    case 'success':
+      return 'success';
+    case false:
+      return 'Failed to execute PDO SQL query to reset/add traffic. Check the database.';
+    default:
+      return $result;
+	}
+}
+//
+//The function NextPort will send a query to database to know the next port number
+function SSAdmin_NextPort($params) {
+	if(!isset($params['configoption3']) || $params['configoption3'] == "") {
+			$start = 8800;
+	} else {
+			$start = $params['configoption3'];
+	}
+	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
+
+	$attr = array(
+	    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
+
+  try{
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->query("SELECT port FROM user");
+		$select = $stmt->fetch(PDO::FETCH_ASSOC);
+		// Check whether there are former services in the table, will return a port as the last port + 1.
+		if(!$select == "")
+		{
+			$stmt2 = $pdo->query("SELECT port FROM user order by port desc limit 1"); //Check the last port
+			$last = $stmt2->fetch(PDO::FETCH_ASSOC);
+			// Check whether the ports have been used up
+			if ($last['port'] >= 65535)
+			{
+				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
+			}	else {
+				$result = $last['port']+1; // If not, then use next port.
+			}
+		}	else {
+			$result=$start; // If no service in the table, will create accounts with the default port.
+		}
+  }
+	catch(PDOException $e){
+      $result = "F";
+  }
+	return $result;
+}
+//The function RstTraffic will operate the database as setting the upload and download traffic to zero.
+function SSAdmin_RstTraffic($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -426,25 +449,62 @@ function shadowsocks_Renew($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$stmt = $pdo->prepare('SELECT sum(u+d) FROM user WHERE pid=:serviceid');
-		$stmt->execute(array(':serviceid' => $serviceid));
-		$Query = $stmt->fetch(PDO::FETCH_ASSOC);
-		if($Query[0]!=0)
-		{
-			$stmt2 = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
-			$stmt2->execute(array(':serviceid' => $params['serviceid']));
+		$stmt = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
+		if($stmt->execute(array(':serviceid' => $params['serviceid']))){
 			return 'success';
-		} else {
-			return 'Noneed to refresh.';
+		}
+		else {
+			return false;
 		}
 	}
 	catch(PDOException $e){
-		die('Renew failed. ' . $e->getMessage());
+		die('PDO Error occurred in resetting traffic' . $e->getMessage());
 	}
 }
+//The function AddTraffic will operate the database as set transfer_enable as transfer_enable+$params[configoptions][Traffic]. An alternative idea for traffic calculation.
+function SSAdmin_AddTraffic($params) {
+	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
 
-function shadowsocks_node($params) {
-	$node = $params['configoption4'];
+	$attr = array(
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
+
+  if(isset($params['configoptions']['Traffic']))
+  {
+    $traffic_GB = explode("G",$params['configoptions']['Traffic'])[0];
+    $traffic = $traffic_GB*1024*1048576;
+  }
+  else
+  {
+    if (!empty($params['configoption4']))
+    {
+      $traffic = $params['configoption4']*1024*1048576;
+    } else {
+      $traffic = 53687091200;
+    }
+  }
+
+	try
+	{
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->prepare("UPDATE `user` SET `transfer_enable`=`transfer_enable`+:traffic WHERE `pid`=:serviceid");
+		if($stmt->execute(array(':traffic' => $traffic, ':serviceid' => $params['serviceid']))){
+			return 'success';
+		}
+		else {
+			return false;
+		}
+	}
+	catch(PDOException $e){
+		die('PDO Error occurred in adding traffic' . $e->getMessage());
+	}
+}
+//
+//The function to divide every node by the character ';' and output as a node for each line in HTML (devide with <br>)
+function SSAdmin_node($params) {
+	$node = $params['configoption5'];
 	if (!empty($node) || isset($node)) {
 		$str = explode(';', $node);
 		foreach ($str as $key => $val) {
@@ -456,10 +516,9 @@ function shadowsocks_node($params) {
 	}
 	return $html;
 }
-
-
-function shadowsocks_link($params) {
-	$node = $params['configoption4'];
+//Show the SS link as ss://{method[-auth]:password@hostname:port} (the string in {} was encrypted by base64)
+function SSAdmin_link($params) {
+	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
@@ -497,8 +556,8 @@ function shadowsocks_link($params) {
 	return $output;
 }
 
-function shadowsocks_qrcode($params) {
-	$node = $params['configoption4'];
+function SSAdmin_qrcode($params) {
+	$node = $params['configoption5'];
 	$encrypt = $params['configoption2'];
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
@@ -518,30 +577,27 @@ function shadowsocks_qrcode($params) {
 	catch(PDOException $e){
 		die('Select userinfo Failed in SSQrCode' . $e->getMessage());
 	}
-	/*$mysql = mysql_connect($params['serverip'],$params['serverusername'],$params['serverpassword']);
-	$Query = mysql_query("SELECT port,passwd FROM user WHERE pid='".$params['serviceid']."'",$mysql);
-	$Query = mysql_fetch_array($Query);*/
+
   $Port = $Query['port'];
   $password = $Query['passwd'];
 	if (!empty($node) || isset($node)) {
 		$str = explode(';', $node);
 		foreach ($str as $key => $val) {
-			$origincode = $encrypt.':'.$password."@".$str[$key].':'.$Port;//ss://method[-auth]:password@hostname:port
+			$origincode = $encrypt.':'.$password."@".$str[$key].':'.$Port; // method[-auth]:password@hostname:port ,-auth for OTA.
 			$output = 'ss://'.base64_encode($origincode);
-			//QRcode::png($output);
-      $imgs .= '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+      $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 		}
 	} else {
 		$origincode = $encrypt.':'.$password."@".$params['serverip'].':'.$Port;//ss://method[-auth]:password@hostname:port
 		$output = 'ss://'.base64_encode($origincode);
-    $imgs = '<img src="https://example.com/modules/servers/shadowsocks/QR/qrcode.php?text='.$output.'" />&nbsp;';
+    $imgs = '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 	}
   //return $origincode;
 	//return $output;
   return $imgs;
 }
 
-function shadowsocks_RstTraffic($params) {
+function SSAdmin_ClientArea($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -553,32 +609,7 @@ function shadowsocks_RstTraffic($params) {
 	try
 	{
 		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$stmt = $pdo->prepare("UPDATE user SET u='0',d='0' WHERE pid=:serviceid");
-		if($stmt->execute(array(':serviceid' => $params['serviceid']))){
-			return 'success';
-		}
-		else {
-			return false;
-		}
-	}
-	catch(PDOException $e){
-		die('Select userinfo Failed in traffic reset' . $e->getMessage());
-	}
-}
-
-function shadowsocks_ClientArea($params) {
-	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
-	$username = $params['serverusername'];
-	$pwd = $params['serverpassword'];
-
-	$attr = array(
-			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-	);
-
-	try
-	{
-		$pdo = new PDO($dsn, $username, $pwd, $attr);
-		$traffic = $params['configoptions']['traffic'];
+		$traffic = $params['configoptions']['Traffic'];
 		$stmt = $pdo->prepare("SELECT sum(u+d),port,passwd,transfer_enable FROM user WHERE pid=:serviceid");
 		$stmt->execute(array(':serviceid' => $params['serviceid']));
 		$Query = $stmt->fetch(PDO::FETCH_BOTH);
@@ -590,9 +621,9 @@ function shadowsocks_ClientArea($params) {
 		$traffic = round($traffic,2);
 		$Usage = round($Usage,2);
 		$Free = round($Free,2);
-		$node = shadowsocks_node($params);
-    $sslink = shadowsocks_link($params);
-		$ssqr = shadowsocks_qrcode($params);
+		$node = SSAdmin_node($params);
+    $sslink = SSAdmin_link($params);
+		$ssqr = SSAdmin_qrcode($params);
         //debug
         $decodeQuery = json_encode($Query);
 	}
@@ -709,7 +740,7 @@ function shadowsocks_ClientArea($params) {
     return $html;
 }
 
-function shadowsocks_AdminServicesTabFields($params) {
+function SSAdmin_AdminServicesTabFields($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
 	$pwd = $params['serverpassword'];
@@ -718,28 +749,23 @@ function shadowsocks_AdminServicesTabFields($params) {
 			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
 	);
 
-		//Traffic
-		$traffic = null;
-		// $traffic = isset($params['configoptions']['traffic']) ? $params['configoptions']['traffic']*1024 : isset($params['configoption5']) ? $params['configoption5']*1024 : 1048576;
-		if (isset($params['configoptions']['traffic'])) {
-			$traffic = $params['configoptions']['traffic']*1024;
-		} else if(!empty($params['configoption5'])) {
-			$traffic = $params['configoption5']*1024;
-		} else {
+	if (isset($params['configoptions']['Traffic'])) {
+			$traffic = $params['configoptions']['Traffic']*1024;
+	} else if(!empty($params['configoption4'])) {
+			$traffic = $params['configoption4']*1024;
+	} else {
 			$traffic = 1048576;
-		}
+	}
 
-		try
-		{
+	try
+	{
 			$pdo = new PDO($dsn, $username, $pwd, $attr);
 			$stmt = $pdo->prepare("SELECT sum(u+d),port FROM user WHERE pid=:serviceid");
 			$stmt->execute(array(':serviceid' => $params['serviceid']));
 			$Query = $stmt->fetch(PDO::FETCH_BOTH);
 			$Usage = $Query[0]/1048576;
 			$Port = $Query['port'];
-			//Free
 			$Free = $traffic - $Usage;
-			//Percentage
 			$fieldsarray = array(
 			 'Traffic Package' => $traffic.' MB',
 			 'Used' => $Usage.' MB',
@@ -747,18 +773,18 @@ function shadowsocks_AdminServicesTabFields($params) {
 			 'Service port' => $Port,
 			);
 			return $fieldsarray;
-		}
-		catch(PDOException $e){
+	}
+	catch(PDOException $e){
 				die('PDO died' . $e->getMessage());
-		}
-
-
+	}
 }
 
-function shadowsocks_AdminCustomButtonArray() {
-    $buttonarray = array(
+function SSAdmin_AdminCustomButtonArray() {
+  $buttonarray = array(
    "Reset Traffic" => "RstTraffic",
+   "Add Traffic" => "AddTraffic",
   );
   return $buttonarray;
 }
+
 ?>
