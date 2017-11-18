@@ -698,11 +698,11 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
-      <form method="post" action="clientarea.php?action=productdetails">
-      <input type="hidden" name="id" value="{$serviceid}" />
-      <input type="hidden" name="modop" value="custom" />
-      <input type="hidden" name="a" value="RefrePort" />
-      <input type="submit" value="Get a new port" />
+      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
+      <input type=\"hidden\" name=\"id\" value=\"{$serviceid}\" />
+      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
+      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
+      <input type=\"submit\" value=\"Get a new port\" />
       </form>
 
 			<hr />
@@ -758,13 +758,13 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
-      <form method="post" action="clientarea.php?action=productdetails">
-      <input type="hidden" name="id" value="{$serviceid}" />
-      <input type="hidden" name="modop" value="custom" />
-      <input type="hidden" name="a" value="RefrePort" />
-      <input type="submit" value="Get a new port" />
+      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
+      <input type=\"hidden\" name=\"id\" value=\"{$serviceid}\" />
+      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
+      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
+      <input type=\"submit\" value=\"Get a new port\" />
       </form>
-      
+
 			<hr />
 
 			<h3>Service Password</h3>
