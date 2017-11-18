@@ -4,6 +4,8 @@ This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an P
 
 # Version Update:
 
+3.0.3 Added the function to change the port of a specific service: <strong>RefrePort</strong> (Per service instead of per server.).
+
 3.0.2 Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than clear the used traffic. Function name: <strong>AddTraffic</strong>
 
 3.0.0 Configuration rearranged. <strong>Do not support</strong> old version anymore. Module name changed to <strong>SSAdmin</strong>.

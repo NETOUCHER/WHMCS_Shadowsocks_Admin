@@ -501,6 +501,52 @@ function SSAdmin_AddTraffic($params) {
 		die('PDO Error occurred in adding traffic' . $e->getMessage());
 	}
 }
+
+function SSAdmin_RefrePort($params) {
+  $dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
+	$username = $params['serverusername'];
+	$pwd = $params['serverpassword'];
+
+	$attr = array(
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+	);
+
+	try
+	{
+		$pdo = new PDO($dsn, $username, $pwd, $attr);
+		$stmt = $pdo->prepare("SELECT u,d,port,passwd,transfer_enable FROM user WHERE pid=:serviceid");
+		$stmt->execute(array(':serviceid' => $params['serviceid']));
+		$Query = $stmt->fetch(PDO::FETCH_BOTH);
+		$u = $Query['u'];
+    $d = $Query['d'];
+    $passwd = $Query['passwd'];
+    $traffic = $Query['transfer_enable'];
+		$port = $Query['port'];
+
+    if($port==SSAdmin_NextPort($param)-1){
+      return 'Failed. This is a new port.'; //If this is the last port, refuse the refresh request to prevent abuse.
+    }
+
+    $terminate=SSAdmin_TerminateAccount($params);
+    if($terminate!='success')
+    {
+      return $terminate;
+    }
+
+    $stmt3 = $pdo->prepare("INSERT INTO user(u,d,port,passwd,transfer_enable,pid) VALUES (:u,:d,:port,:password,:traffic,:serviceid)");
+    if($stmt3->execute(array(':u'=>$u, ':d'=>$d, ':port'=>$port, ':password'=>$passwd, ':traffic'=>$traffic, ':serviceid'=>$params['serviceid'])))
+    {
+      return 'success';
+    }
+    else
+    {
+      return 'Failed to refresh port. An error out of PDO occurred.';
+    }
+  }
+  catch(PDOException $e){
+    die('PDO Error occurred.'.$e->getMessage());
+  }
+}
 //
 //The function to divide every node by the character ';' and output as a node for each line in HTML (devide with <br>)
 function SSAdmin_node($params) {
@@ -652,6 +698,12 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
+      <form method="post" action="clientarea.php?action=productdetails">
+      <input type="hidden" name="id" value="{$serviceid}" />
+      <input type="hidden" name="modop" value="custom" />
+      <input type="hidden" name="a" value="RefrePort" />
+      <input type="submit" value="Get a new port" />
+      </form>
 
 			<hr />
 
@@ -706,7 +758,13 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
-
+      <form method="post" action="clientarea.php?action=productdetails">
+      <input type="hidden" name="id" value="{$serviceid}" />
+      <input type="hidden" name="modop" value="custom" />
+      <input type="hidden" name="a" value="RefrePort" />
+      <input type="submit" value="Get a new port" />
+      </form>
+      
 			<hr />
 
 			<h3>Service Password</h3>
@@ -783,6 +841,7 @@ function SSAdmin_AdminCustomButtonArray() {
   $buttonarray = array(
    "Reset Traffic" => "RstTraffic",
    "Add Traffic" => "AddTraffic",
+   "Refresh Port" => "RefrePort",
   );
   return $buttonarray;
 }
