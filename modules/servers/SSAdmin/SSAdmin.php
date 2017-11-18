@@ -522,9 +522,14 @@ function SSAdmin_RefrePort($params) {
     $passwd = $Query['passwd'];
     $traffic = $Query['transfer_enable'];
 		$port = $Query['port'];
+    $nextport = SSAdmin_NextPort($params);
 
-    if($port==SSAdmin_NextPort($param)-1){
-      return 'Failed. This is a new port.'; //If this is the last port, refuse the refresh request to prevent abuse.
+    if($nextport==0){
+      return 'Sorry, next port exceeded.'; //If this is the last port, refuse the refresh request to prevent abuse.
+    }
+
+    if($port==$nextport-1){
+      return 'Sorry, this is a new port and is not eligible for refresh.'; //If this is the last port, refuse the refresh request to prevent abuse.
     }
 
     $terminate=SSAdmin_TerminateAccount($params);
@@ -534,7 +539,7 @@ function SSAdmin_RefrePort($params) {
     }
 
     $stmt3 = $pdo->prepare("INSERT INTO user(u,d,port,passwd,transfer_enable,pid) VALUES (:u,:d,:port,:password,:traffic,:serviceid)");
-    if($stmt3->execute(array(':u'=>$u, ':d'=>$d, ':port'=>$port, ':password'=>$passwd, ':traffic'=>$traffic, ':serviceid'=>$params['serviceid'])))
+    if($stmt3->execute(array(':u'=>$u, ':d'=>$d, ':port'=>$nextport, ':password'=>$passwd, ':traffic'=>$traffic, ':serviceid'=>$params['serviceid'])))
     {
       return 'success';
     }
@@ -691,19 +696,13 @@ function SSAdmin_ClientArea($params) {
 
 			<hr />
 
-			<h3><strong>Server List</strong></h3>
+			<h3>Server</h3>
 			<h5>{$node}</h5>
 
 			<hr />
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
-      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
-      <input type=\"hidden\" name=\"id\" value=\"{$serviceid}\" />
-      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
-      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
-      <input type=\"submit\" value=\"Get a new port\" />
-      </form>
 
 			<hr />
 
@@ -712,24 +711,24 @@ function SSAdmin_ClientArea($params) {
 
 			<hr />
 
-			<h3><strong>Encryption</strong></h3>
+			<h3>Encryption</h3>
 			<h5>{$params['configoption2']}</h5>
 
 			<hr />
 
-			<h3><strong>Traffic Package</strong></h3>
+			<h3>Traffic Package</h3>
 			<h5>Bandwidth: {$traffic} GB</h5>
 			<h5>Used: {$Usage} GB</h5>
-			<h5>Balance in current cycle: {$Free} GB</h5>
+			<h5>Balance: {$Free} GB</h5>
 
 			<hr />
 
-			<h3><strong>SS-Link</strong></h3>
+			<h3>SS-Link</h3>
 			<h5>{$sslink}</h5>
 
 			<hr />
 
-			<h3><strong>QR Code</strong></h3>
+			<h3>QR Code</h3>
 			<h5>{$ssqr}</h5>
 
 				<!--</div></div>-->
@@ -758,12 +757,6 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$Port}</h5>
-      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
-      <input type=\"hidden\" name=\"id\" value=\"{$serviceid}\" />
-      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
-      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
-      <input type=\"submit\" value=\"Get a new port\" />
-      </form>
 
 			<hr />
 
@@ -818,10 +811,11 @@ function SSAdmin_AdminServicesTabFields($params) {
 	try
 	{
 			$pdo = new PDO($dsn, $username, $pwd, $attr);
-			$stmt = $pdo->prepare("SELECT sum(u+d),port FROM user WHERE pid=:serviceid");
+			$stmt = $pdo->prepare("SELECT sum(u+d),port,transfer_enable FROM user WHERE pid=:serviceid");
 			$stmt->execute(array(':serviceid' => $params['serviceid']));
 			$Query = $stmt->fetch(PDO::FETCH_BOTH);
 			$Usage = $Query[0]/1048576;
+      $traffic = $Query['transfer_enable'] / 1048576;
 			$Port = $Query['port'];
 			$Free = $traffic - $Usage;
 			$fieldsarray = array(
