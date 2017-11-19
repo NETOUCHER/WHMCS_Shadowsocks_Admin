@@ -626,7 +626,7 @@ function SSAdmin_qrcode($params) {
 		$Query = $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 	catch(PDOException $e){
-		die('Select userinfo Failed in SSQrCode' . $e->getMessage());
+		die('Select userinfo Failed in qrCode' . $e->getMessage());
 	}
 
   $Port = $Query['port'];
@@ -663,25 +663,26 @@ function SSAdmin_ClientArea($params) {
 		$traffic = $params['configoptions']['Traffic'];
 		$stmt = $pdo->prepare("SELECT sum(u+d),port,passwd,transfer_enable FROM user WHERE pid=:serviceid");
 		$stmt->execute(array(':serviceid' => $params['serviceid']));
-		$Query = $stmt->fetch(PDO::FETCH_BOTH);
-		$Usage = $Query[0] / 1073741824;
-    $traffic = $Query['transfer_enable'] / 1073741824;
-		$Port = $Query['port'];
-		$Free = $traffic  - $Usage;
-		$password = $Query['passwd'];
+		$query = $stmt->fetch(PDO::FETCH_BOTH);
+		$usage = $query[0] / 1073741824;
+    $traffic = $query['transfer_enable'] / 1073741824;
+		$port = $query['port'];
+		$free = $traffic - $usage;
+		$password = $query['passwd'];
 		$traffic = round($traffic,2);
-		$Usage = round($Usage,2);
-		$Free = round($Free,2);
+		$usage = round($usage,2);
+		$free = round($free,2);
 		$node = SSAdmin_node($params);
     $sslink = SSAdmin_link($params);
 		$ssqr = SSAdmin_qrcode($params);
         //debug
-        $decodeQuery = json_encode($Query);
+        $decodeQuery = json_encode($query);
 	}
 	catch(PDOException $e){
 			$html='Error in establishing database connection with PDO_MySQL' . $e->getMessage();
 			die('PDO Died' . $e->getMessage());
 	}
+
     if (isset( $traffic )) {
     	$html = "
     	<div class=\"row\">
@@ -702,8 +703,15 @@ function SSAdmin_ClientArea($params) {
 			<hr />
 
 			<h3>Service Port</h3>
-			<h5>{$Port}</h5>
-
+			<h5>{$port}</h5>
+<!--
+      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
+      <input type=\"hidden\" name=\"id\" value=\"{$params['serviceid']}\" />
+      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
+      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
+      <input type=\"submit\" value=\"Get a new port\" />
+      </form>
+-->
 			<hr />
 
 			<h3>Service Password</h3>
@@ -718,8 +726,8 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Traffic Package</h3>
 			<h5>Bandwidth: {$traffic} GB</h5>
-			<h5>Used: {$Usage} GB</h5>
-			<h5>Balance: {$Free} GB</h5>
+			<h5>Used: {$usage} GB</h5>
+			<h5>Balance: {$free} GB</h5>
 
 			<hr />
 
@@ -756,7 +764,7 @@ function SSAdmin_ClientArea($params) {
 			<hr />
 
 			<h3>Service Port</h3>
-			<h5>{$Port}</h5>
+			<h5>{$port}</h5>
 
 			<hr />
 
@@ -772,7 +780,7 @@ function SSAdmin_ClientArea($params) {
 
 			<h3><strong>Traffic Package</strong></h3>
 			<h5>Bandwidth: Unlimited</h5>
-			<h5>Used: {$Usage}GB</h5>
+			<h5>Used: {$usage}GB</h5>
 
 			<hr />
 
@@ -829,6 +837,13 @@ function SSAdmin_AdminServicesTabFields($params) {
 	catch(PDOException $e){
 				die('PDO died' . $e->getMessage());
 	}
+}
+
+function SSAdmin_AdminCustomButtonArray() {
+  $buttonarray = array(
+   "Refresh Port" => "RefrePort",
+  );
+  return $buttonarray;
 }
 
 function SSAdmin_AdminCustomButtonArray() {
