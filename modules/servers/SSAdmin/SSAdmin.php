@@ -704,14 +704,7 @@ function SSAdmin_ClientArea($params) {
 
 			<h3>Service Port</h3>
 			<h5>{$port}</h5>
-<!--
-      <form method=\"post\" action=\"clientarea.php?action=productdetails\">
-      <input type=\"hidden\" name=\"id\" value=\"{$params['serviceid']}\" />
-      <input type=\"hidden\" name=\"modop\" value=\"custom\" />
-      <input type=\"hidden\" name=\"a\" value=\"RefrePort\" />
-      <input type=\"submit\" value=\"Get a new port\" />
-      </form>
--->
+
 			<hr />
 
 			<h3>Service Password</h3>
@@ -839,7 +832,7 @@ function SSAdmin_AdminServicesTabFields($params) {
 	}
 }
 
-function SSAdmin_AdminCustomButtonArray() {
+function SSAdmin_ClientAreaButtonArray() {
   $buttonarray = array(
    "Refresh Port" => "RefrePort",
   );
