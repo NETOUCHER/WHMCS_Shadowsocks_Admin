@@ -6,7 +6,7 @@ This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an P
 
 3.0.3 Added the function to change the port of a specific service: <strong>RefrePort</strong> (Per service instead of per server.).
 
-3.0.2 Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than clear the used traffic. Function name: <strong>AddTraffic</strong>
+3.0.2 Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than erasing the used traffic. Function name: <strong>AddTraffic</strong>
 
 3.0.0 Configuration rearranged. <strong>Do not support</strong> old version anymore. Module name changed to <strong>SSAdmin</strong>.
       - The ability to reset traffic when the invoice get paid and the service get renewed. Execute <strong>RstTraffic</strong> in <strong>SSAdmin_Renew</strong> to make it happen (default)
@@ -41,7 +41,7 @@ Then you could edit the domain name from <strong>example.com</strong> to yours i
           exit;
         }
 
-and clear the remark to enable the anti-abuse for your generator. The code in remark area could define the domain which could use the generator legally and all the visiting from the other domain will be block with another QR code which could be decoded to a curse.
+and delete the remark to enable the anti-abuse for your generator. The code in remark area could define the only domain to use the generator legally and all the visiting from the another domain will be blocked. A QR code which could be decoded to be a curse would be displayed to illegal visiting.
 
 # LICENSING
 
