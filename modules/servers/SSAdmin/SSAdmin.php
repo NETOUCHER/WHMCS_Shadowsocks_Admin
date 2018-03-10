@@ -13,6 +13,11 @@ if (!defined("WHMCS")) {
 }
 */
 
+/*
+
+    Beginning of functional functions called directly by WHMCS
+
+*/
 function SSAdmin_MetaData()
 {
     return array(
@@ -63,15 +68,10 @@ function SSAdmin_ConfigOptions() {
 function SSAdmin_CreateAccount($params) {
 	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
   $password 			= $params["password"]; //
-
 	$port = SSAdmin_NextPort($params);
-	// Check the returned code.
-	if($port == 0)
+	if(!is_numeric($port))
 	{
-		return "Ports exceeded.";
-	}
-	elseif($port == "F") {
-		return "PDO error in port checking.";
+		return 'Error occurred. '.$port; // A number is expected. Or it is a error message.
 	}
 
 	// Use WHMCS Capsule to get adminusername for API
@@ -395,6 +395,14 @@ function SSAdmin_Renew($params) {
       return $result;
 	}
 }
+/*
+
+    Ending of functional functions called directly by WHMCS
+    &&
+    Beginning of supporting functions
+
+*/
+
 //
 //The function NextPort will send a query to database to know the next port number
 function SSAdmin_NextPort($params) {
@@ -423,16 +431,16 @@ function SSAdmin_NextPort($params) {
 			// Check whether the ports have been used up
 			if ($last['port'] >= 65535)
 			{
-				$result = 0; // Return 0 as a error code. Will deal with it in account creation.
+				$result = 'There is no available port. You may need a new database.'; // If last port is 65535 or more, there will be no space for a larger port number.
 			}	else {
-				$result = $last['port']+1; // If not, then use next port.
+				$result = $last['port']+1; // If port is available, then use next port.
 			}
 		}	else {
 			$result=$start; // If no service in the table, will create accounts with the default port.
 		}
   }
 	catch(PDOException $e){
-      $result = "F";
+      $result = 'PDOSQL Error: '.$e->getMessage(); // If PDO error, will return the error.
   }
 	return $result;
 }
@@ -647,7 +655,13 @@ function SSAdmin_qrcode($params) {
 	//return $output;
   return $imgs;
 }
+/*
 
+      Ending of supporting functions
+      &&
+      Beginning of WHMCS UI related functions
+
+*/
 function SSAdmin_ClientArea($params) {
 	$dsn = "mysql:host=".$params['serverip'].";dbname=".$params['configoption1'].";port=3306;charset=utf8";
 	$username = $params['serverusername'];
@@ -847,5 +861,10 @@ function SSAdmin_AdminCustomButtonArray() {
   );
   return $buttonarray;
 }
+/*
+
+      Ending of WHMCS UI related functions
+
+*/
 
 ?>
