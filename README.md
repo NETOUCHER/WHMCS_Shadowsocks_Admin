@@ -2,6 +2,9 @@
 
 This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's a module written in PHP and includes a QR Code 2-D barcode generator by Dominik Dzienia.
 
+# Full Tutorial
+https://github.com/NeToucher/WHMCS_Shadowsocks_Module/wiki/Tutorial:-Setting-up
+
 # Version Update:
 
 3.0.3 Added the function to change the port of a specific service: <strong>RefrePort</strong> (Per service instead of per server.).
