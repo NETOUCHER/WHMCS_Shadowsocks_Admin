@@ -1,6 +1,6 @@
 # WHMCS-Shadowsocks [Provisioning Module]
 
-This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an PHP module including a QR Code 2-D barcode generator by Dominik Dzienia.
+This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's a module written in PHP and includes a QR Code 2-D barcode generator by Dominik Dzienia.
 
 # Version Update:
 
@@ -27,7 +27,7 @@ SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyus
 
 <strong>****MOST IMPORTANT****</strong>
 
-You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong>
+You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>647</strong> and line <strong>652</strong>
 
     $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 
@@ -42,6 +42,14 @@ Then you could edit the domain name from <strong>example.com</strong> to yours i
         }
 
 and delete the remark to enable the anti-abuse for your generator. The code in remark area could define the only domain to use the generator legally and all the visiting from the another domain will be blocked. A QR code which could be decoded to be a curse would be displayed to illegal visiting.
+
+# Supported Configurable Options
+
+<strong>Option Name</strong>: Traffic
+<strong>Options format</strong>: {$n}G{any_text_or_not}
+<strong>Example Options</strong>: 5G    10G(10% off)    20G Hot!
+
+The module will query the value of the option named <strong>Traffic</strong>, then truncate the value by the first letter 'G'. The number before the letter 'G' would be recorded as the traffic(the traffic would be renewed when pay for the related invoice.)
 
 # LICENSING
 
