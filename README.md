@@ -1,8 +1,8 @@
-# WHMCS-Shadowsocks [Provisioning Module]
+# Shadowsocks Admin [WHMCS Product Provisioning Module]
 
-This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's a module written in PHP and includes a QR Code 2-D barcode generator by Dominik Dzienia.
+This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyuser (https://github.com/mengskysama/shadowsocks-rm/tree/manyuser) and its branches.  Includes a QR Code 2-D barcode generator by Dominik Dzienia.
 
-# Full Tutorial
+# Full Setting Up Tutorial
 https://github.com/NeToucher/WHMCS_Shadowsocks_Module/wiki/Tutorial:-Setting-up
 
 # Version Update:
@@ -22,9 +22,9 @@ https://github.com/NeToucher/WHMCS_Shadowsocks_Module/wiki/Tutorial:-Setting-up
 
 1.0.0 <a href="https://github.com/soft-wiki/whmcs-shadowsocks">whmcs-shadowsocks</a> by Tension (Verification Request)
 
-#
-
-SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyuser/shadowsocks
+# Database Structure
+Compatible with the structure of SSPanel.
+Compatible SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyuser/shadowsocks
 
 # Configure your module
 
@@ -56,7 +56,7 @@ The module will query the value of the option named <strong>Traffic</strong>, th
 
 # LICENSING
 
-Copyright (C) 2017 NeToucher Limited
+Copyright (C) 2017-2018 NeToucher Limited
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
