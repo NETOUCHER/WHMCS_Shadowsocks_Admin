@@ -431,7 +431,7 @@ function SSAdmin_NextPort($params) {
 			// Check whether the ports have been used up
 			if ($last['port'] >= 65535)
 			{
-				$result = 'There is no available port. You may need a new database.'; // If last port is 65535 or more, there will be no space for a larger port number.
+				$result = 'Port exceeded.'; // If last port is 65535 or more, there will be no space for a larger port number.
 			}	else {
 				$result = $last['port']+1; // If port is available, then use next port.
 			}

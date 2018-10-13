@@ -1,6 +1,9 @@
-# WHMCS-Shadowsocks [Provisioning Module]
+# Shadowsocks Admin [WHMCS Product Provisioning Module]
 
-This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an PHP module including a QR Code 2-D barcode generator by Dominik Dzienia.
+This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyuser (https://github.com/mengskysama/shadowsocks-rm/tree/manyuser) and its branches.  Includes a QR Code 2-D barcode generator by Dominik Dzienia.
+
+# Full Setting Up Tutorial
+https://github.com/NeToucher/WHMCS_Shadowsocks_Module/wiki/Tutorial:-Setting-up
 
 # Version Update:
 
@@ -19,15 +22,15 @@ This is the provisioning module of WHMCS 7.x for shadowsocks-manyuser. It's an P
 
 1.0.0 <a href="https://github.com/soft-wiki/whmcs-shadowsocks">whmcs-shadowsocks</a> by Tension (Verification Request)
 
-#
-
-SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyuser/shadowsocks
+# Database Structure
+Compatible with the structure of SSPanel.
+Compatible SQL File can be found at https://github.com/NeToucher/shadowsocks-rm/tree/manyuser/shadowsocks
 
 # Configure your module
 
 <strong>****MOST IMPORTANT****</strong>
 
-You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>540</strong> and line <strong>545</strong>
+You must edit the URL in <strong>shadowsocks.php</strong> on line <strong>647</strong> and line <strong>652</strong>
 
     $imgs .= '<img src="https://example.com/modules/servers/SSAdmin/lib/QR_generator/qrcode.php?text='.$output.'" />&nbsp;';
 
@@ -43,9 +46,17 @@ Then you could edit the domain name from <strong>example.com</strong> to yours i
 
 and delete the remark to enable the anti-abuse for your generator. The code in remark area could define the only domain to use the generator legally and all the visiting from the another domain will be blocked. A QR code which could be decoded to be a curse would be displayed to illegal visiting.
 
+# Supported Configurable Options
+
+<strong>Option Name</strong>: Traffic
+<strong>Options format</strong>: {$n}G{any_text_or_not}
+<strong>Example Options</strong>: 5G    10G(10% off)    20G Hot!
+
+The module will query the value of the option named <strong>Traffic</strong>, then truncate the value by the first letter 'G'. The number before the letter 'G' would be recorded as the traffic(the traffic would be renewed when pay for the related invoice.)
+
 # LICENSING
 
-Copyright (C) 2017 NeToucher Limited
+Copyright (C) 2017-2018 NeToucher Limited
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
