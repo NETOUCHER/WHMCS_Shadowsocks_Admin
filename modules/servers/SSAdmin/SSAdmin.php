@@ -67,7 +67,7 @@ function SSAdmin_ConfigOptions() {
 
 function SSAdmin_CreateAccount($params) {
 	$serviceid			= $params["serviceid"]; //The unique ID of the product in WHMCS database.
-  $password 			= $params["password"]; //
+    $password 			= $params["password"]; //
 	$port = SSAdmin_NextPort($params);
 	if(!is_numeric($port))
 	{
@@ -100,7 +100,7 @@ function SSAdmin_CreateAccount($params) {
 		$select = $stmt2->fetch(PDO::FETCH_ASSOC);
 	}
 	catch(PDOException $e){
-		return 'Cannot find pid.' . $e->getMessage();
+		return 'Cannot check if repeat.' . $e->getMessage();
 	}
 
   if (!empty($select['pid'])) {
@@ -693,8 +693,26 @@ function SSAdmin_ClientArea($params) {
         $decodeQuery = json_encode($query);
 	}
 	catch(PDOException $e){
-			$html='Error in establishing database connection with PDO_MySQL' . $e->getMessage();
-			die('PDO Died' . $e->getMessage());
+			$html=" 
+			<div class=\"row\">
+			<!--<div class=\"col-sm-4\">-->
+			<!--<div class=\"panel-collapse collapse in\">-->
+
+			<h3 style=\"color: #ffffff; background-color: #ff0000\"><strong>SERVICE OUT OF ORDER</strong></h3>
+
+			<hr />
+
+			<h4><strong>Feel free to contact our customer service if you don't think you should see this.</strong></h4>
+
+			<hr />
+
+			<h4style=\"color: #000000; background-color: #ffffff\"><strong>". $e->getMessage() ."</strong></h4>
+
+			<hr />
+
+			</div>
+		<!--</div>-->
+    	";
 	}
 
     if (isset( $traffic )) {
@@ -830,7 +848,7 @@ function SSAdmin_AdminServicesTabFields($params) {
 			$stmt->execute(array(':serviceid' => $params['serviceid']));
 			$Query = $stmt->fetch(PDO::FETCH_BOTH);
 			$Usage = $Query[0]/1048576;
-      $traffic = $Query['transfer_enable'] / 1048576;
+      		$traffic = $Query['transfer_enable'] / 1048576;
 			$Port = $Query['port'];
 			$Free = $traffic - $Usage;
 			$fieldsarray = array(
@@ -842,7 +860,12 @@ function SSAdmin_AdminServicesTabFields($params) {
 			return $fieldsarray;
 	}
 	catch(PDOException $e){
-				die('PDO died' . $e->getMessage());
+			$fieldsarray = array(
+			 'Status' => 'ERROR',
+			 'Reason' => 'Failed to establish connection to database',
+			 'ErrMsg' => $e->getMessage(),
+		   	);
+		   	return $fieldsarray;
 	}
 }
 
