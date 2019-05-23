@@ -3,7 +3,8 @@
 This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyuser (https://github.com/mengskysama/shadowsocks-rm/tree/manyuser) and its branches.  Includes a QR Code 2-D barcode generator by Dominik Dzienia.
 
 # Full Setting Up Tutorial
-https://github.com/NeToucher/WHMCS_Shadowsocks_Module/wiki/Tutorial:-Setting-up
+
+Please refer to the Wiki page.
 
 # Version Update:
 
