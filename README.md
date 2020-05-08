@@ -6,6 +6,12 @@ This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyu
 
 Major revision would be released in May 2020.  
 
+Feature to support:
+- Customize MySQL Database Port
+- Restricted Port Range (Infinity growth by default)
+- Statistics
+- Plugins support
+
 # Full Setting Up Tutorial
 
 Please refer to the Wiki page.
