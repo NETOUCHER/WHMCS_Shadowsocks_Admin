@@ -2,34 +2,23 @@
 
 This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyuser (https://github.com/mengskysama/shadowsocks-rm/tree/manyuser) and its branches.  Includes a QR Code 2-D barcode generator by Dominik Dzienia.
 
-# Important Announcement
-
-Major revision would be released in May 2020.  
-
-Feature to support:
-- Customize MySQL Database Port
-- Restricted Port Range (Infinity growth by default)
-- Statistics
-- Plugins support
-
 # Full Setting Up Tutorial
 
 Please refer to the Wiki page.
 
 # Version Update:
 
-3.0.3 Added the function to change the port of a specific service: <strong>RefrePort</strong> (Per service instead of per server.).
+4.0.0   Customizable MySQL Database Port
+        Restricted Port Range (Infinity growth by default)
 
-3.0.2 Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than erasing the used traffic. Function name: <strong>AddTraffic</strong>
+3.0     Added the function to change the port of a specific service: <strong>RefrePort</strong> (Per service instead of per server.).
+        Added the alternative idea to update the traffic: to enlarge the limitation of the traffic rather than erasing the used traffic. Function name: <strong>AddTraffic</strong>
+        Configuration rearranged. <strong>Do not support</strong> old version anymore. Module name changed to <strong>SSAdmin</strong>.
+        - The ability to reset traffic when the invoice get paid and the service get renewed. Execute <strong>RstTraffic</strong> in <strong>SSAdmin_Renew</strong> to make it happen (default)
 
-3.0.0 Configuration rearranged. <strong>Do not support</strong> old version anymore. Module name changed to <strong>SSAdmin</strong>.
-      - The ability to reset traffic when the invoice get paid and the service get renewed. Execute <strong>RstTraffic</strong> in <strong>SSAdmin_Renew</strong> to make it happen (default)
-
-2.0.2 Integrated with <strong>QR code generator</strong>. *You must configure the module manually.*
-
-2.0.1 A Shadowsocks link generator.
-
-2.0.0 Converted All Mysql queries into PDO_Mysql queries.
+2.0     Integrated with <strong>QR code generator</strong>. *You must configure the module manually.*
+        A Shadowsocks link generator.
+        Converted All Mysql queries into PDO_Mysql queries.
 
 1.0.0 <a href="https://github.com/soft-wiki/whmcs-shadowsocks">whmcs-shadowsocks</a> by Tension (Verification Request)
 
@@ -51,7 +40,7 @@ Then you could edit the domain name from <strong>example.com</strong> to yours i
 
     if(strpos($_SERVER['HTTP_REFERER'], 'example.com') == FALSE)
        {
-          QRcode::png("Fuck your self idiot.");
+          QRcode::png("Stealing QR code?");
           exit;
         }
 
@@ -64,6 +53,10 @@ and delete the remark to enable the anti-abuse for your generator. The code in r
 <strong>Example Options</strong>: 5G    10G(10% off)    20G Hot!
 
 The module will query the value of the option named <strong>Traffic</strong>, then truncate the value by the first letter 'G'. The number before the letter 'G' would be recorded as the traffic(the traffic would be renewed when pay for the related invoice.)
+
+# Future Features
+- Graphical Statistics
+- Plugins support
 
 # LICENSING
 

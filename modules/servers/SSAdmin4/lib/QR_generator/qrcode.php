@@ -4,7 +4,7 @@
 /*****************************************
     if(strpos($_SERVER['HTTP_REFERER'], 'example.com') == FALSE)
     {
-      QRcode::png("Fuck your self idiot.");
+      QRcode::png("STEALING QR CODE?");
       exit;
     }
 ******************************************/
