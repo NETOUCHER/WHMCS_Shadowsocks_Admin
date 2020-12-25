@@ -184,6 +184,9 @@ function SSAdmin4_CreateAccount($params) {
     		echo "Password update failed.Bad Capsule function. {$e->getMessage()}";
 			}
 			$password = $params["customfields"]['password'];
+		} elseif (strpos($password,'#')!==false) {
+			# TODO: Filter out all #'s in $password
+			
 		}
 
 		if(isset($params['configoptions']['Traffic']))
