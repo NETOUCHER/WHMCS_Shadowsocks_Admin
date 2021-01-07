@@ -1,5 +1,5 @@
 # Shadowsocks Admin V4 [WHMCS Product Provisioning Module]
-[![Generic badge](https://img.shields.io/badge/Development-Halted-RED.svg)](https://www.php.net/ChangeLog-7.php)
+[![Generic badge](https://img.shields.io/badge/Development-Halted-red.svg)](https://www.php.net/ChangeLog-7.php)
 [![Generic badge](https://img.shields.io/badge/PHP-7-GREEN.svg)](https://www.php.net/ChangeLog-7.php)
 
 This is the provisioning module for WHMCS 7.x, compatible with Shadowsocks-manyuser (https://github.com/mengskysama/shadowsocks-rm/tree/manyuser) and its branches.  Includes a QR Code 2-D barcode generator by Dominik Dzienia.
